@@ -740,8 +740,13 @@
                 
                 // Обрабатываем само слово
                 if (parts.word) {
-                    // Проверяем, есть ли данные для этого слова по индексу
-                    const hasData = currentWordData && currentWordData[wordIndex] !== undefined;
+                    // Проверяем, есть ли реальные данные для этого слова по индексу
+                    let hasData = false;
+                    if (currentWordData && currentWordData[wordIndex]) {
+                        const wordData = currentWordData[wordIndex];
+                        // Считаем, что данные есть только если хотя бы одно поле не null
+                        hasData = wordData.pos !== null || wordData.form !== null || wordData.lemma !== null;
+                    }
                     
                     const className = hasData ? 'word-marked' : 'word-unmarked';
                     result += `<span class="${className}" data-index="${wordIndex}">${parts.word}</span>`;
