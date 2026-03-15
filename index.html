@@ -213,7 +213,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📚 Саамские тексты</h1>
+        <h1>📚 Корпус саамских языков Кольского полуострова</h1>
         
         <div class="language-section">
             <button class="lang-btn" data-lang="skolt">Колтта-саамский</button>
@@ -225,7 +225,7 @@
         <div class="main-content">
             <div class="file-browser">
                 <div class="browser-header" id="browserHeader">
-                    📁 Файлы: тер-саамский
+                    📁 Тексты: тер-саамский
                 </div>
                 <ul class="file-list" id="fileList">
                     <!-- Файлы будут загружаться сюда -->
@@ -243,10 +243,6 @@
         </div>
 
         <div id="stats" class="stats"></div>
-
-        <div class="note">
-            <strong>📝 Примечание:</strong> Тексты загружаются из папки texts/. Нажмите на файл в браузере слева для просмотра содержимого.
-        </div>
     </div>
 
     <script>
@@ -255,30 +251,26 @@
             skolt: {
                 name: "колтта-саамский",
                 texts: [
-                    { id: "skolt1", title: "Текст 1", file: "texts/skolt/text1.txt" },
-                    { id: "skolt2", title: "Текст 2", file: "texts/skolt/text2.txt" }
+                    { id: "skolt", title: "Текст 1", file: "texts/skolt/example.txt" }
                 ]
             },
             akkala: {
                 name: "аккала-саамский",
                 texts: [
-                    { id: "akkala1", title: "Как пекли хлеб", file: "texts/akkala/bread.txt" },
-                    { id: "akkala2", title: "Как солили рыбу", file: "texts/akkala/fish.txt" }
+                    { id: "akkala1", title: "Как пекли хлеб?", file: "texts/akkala/kert-1.txt" },
+                    { id: "akkala2", title: "Как солили рыбу?", file: "texts/akkala/kert-2.txt" }
                 ]
             },
             kildin: {
                 name: "кильдин-саамский",
                 texts: [
-                    { id: "kildin1", title: "Текст 1", file: "texts/kildin/text1.txt" },
-                    { id: "kildin2", title: "Текст 2", file: "texts/kildin/text2.txt" },
-                    { id: "kildin3", title: "Текст 3", file: "texts/kildin/text3.txt" }
+                    { id: "kildin", title: "Текст 1", file: "texts/kildin/example.txt" }
                 ]
             },
             ter: {
                 name: "тер-саамский",
                 texts: [
-                    { id: "ter1", title: "Текст 1", file: "texts/ter/text1.txt" },
-                    { id: "ter2", title: "Текст 2", file: "texts/ter/text2.txt" }
+                    { id: "ter", title: "Текст 1", file: "texts/ter/example.txt" }
                 ]
             }
         };
