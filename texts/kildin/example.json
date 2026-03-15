@@ -5,73 +5,85 @@
       "surface": "Ко̄ххт",
       "pos": "вопросительное местоимение",
       "form": "-",
-      "lemma": "ко̄ххт"
+      "lemma": "ко̄ххт",
+      "translation": "как"
     },
     {
       "surface": "тӯй",
       "pos": "существительное",
       "form": "ед.ч., им.п.",
-      "lemma": "тӯйй"
+      "lemma": "тӯйй",
+      "translation": "дело"
     },
     {
       "surface": "мэ̄ннэв",
       "pos": "глагол",
       "form": "3 л., мн.ч., индикатив, наст. вр.",
-      "lemma": "мэ̄ннэ"
+      "lemma": "мэ̄ннэ",
+      "translation": "идти"
     },
     {
       "surface": "Мун",
       "pos": "личное местоимение",
       "form": "ед.ч., род.п.",
-      "lemma": "мунн"
+      "lemma": "мунн",
+      "translation": "я"
     },
     {
       "surface": "тӯй",
       "pos": "существительное",
       "form": "мн.ч., им.п.",
-      "lemma": "тӯйй"
+      "lemma": "тӯйй",
+      "translation": "дело"
     },
     {
       "surface": "Уйна",
       "pos": "глагол",
       "form": "1 л., ед.ч., индикатив, наст. вр.",
-      "lemma": "уййнэ"
+      "lemma": "уййнэ",
+      "translation": "видеть"
     },
     {
       "surface": "ло̄ссесь",
       "pos": "прилагательное",
       "form": "аттрибутив",
-      "lemma": "ло̄ссесь"
+      "lemma": "ло̄ссесь",
+      "translation": "плохой"
     },
     {
       "surface": "тӯй",
       "pos": "существительное",
       "form": "ед.ч., вин.п.",
-      "lemma": "тӯйй"
+      "lemma": "тӯйй",
+      "translation": "дело"
     },
     {
       "surface": "Мунн",
-      "pos": null,
-      "form": null,
-      "lemma": null
+      "pos": "личное местоимение",
+      "form": "ед.ч., им.п.",
+      "lemma": "мунн",
+      "translation": "я"
     },
     {
       "surface": "эмм",
       "pos": null,
-      "form": null,
-      "lemma": null
+      "form": "отрицание, 1 л., ед.ч.",
+      "lemma": "эйй",
+      "translation": "не"
     },
     {
       "surface": "са̄рн",
       "pos": "глагол",
       "form": "коннегатив",
-      "lemma": "са̄ррнэ"
+      "lemma": "са̄ррнэ",
+      "translation": "говорить"
     },
     {
       "surface": "рӯшас",
-      "pos": null,
+      "pos": "существительное",
       "form": null,
-      "lemma": null
+      "lemma": "рӯшас",
+      "translation": "по-русски"
     }
   ]
 }
