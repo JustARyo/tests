@@ -658,141 +658,110 @@
             words.forEach(span => {
                 span.addEventListener('click', (e) => {
                     const rawWord = e.target.textContent;
-                    const wordIndex = parseInt(e.target.dataset.index);
-                    showWordInfo(rawWord, wordIndex);
+                    const wordKey = e.target.dataset.word;
+                    showWordInfo(rawWord, wordKey);
                 });
             });
         }
 
-        function showWordInfo(rawWord, wordIndex) {
+        function showWordInfo(rawWord, wordKey) {
             const infoContent = document.getElementById('wordInfoContent');
-            
-            // Ищем слово в данных по индексу
-            let wordInfo = null;
-            
-            if (currentWordData && Array.isArray(currentWordData) && wordIndex !== undefined) {
-                wordInfo = currentWordData[wordIndex];
-            }
-            
-            if (wordInfo) {
+    
+            // Берем данные напрямую из JSON по ключу (самому слову)
+            const wordData = currentWordData[wordKey];
+    
+            if (wordData) {
                 infoContent.innerHTML = `
                     <div class="word-display">${rawWord}</div>
                     <div class="word-attributes">
                         <div class="attribute-item">
                             <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value">${wordInfo.pos || '<em>не указано</em>'}</div>
+                            <div class="attribute-value">${wordData.pos || '<em>не указано</em>'}</div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value">${wordInfo.form || '<em>не указано</em>'}</div>
+                            <div class="attribute-value">${wordData.form || '<em>не указано</em>'}</div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value">${wordInfo.lemma || '<em>не указано</em>'}</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                infoContent.innerHTML = `
-                    <div class="word-display">${rawWord}</div>
-                    <div class="word-attributes">
-                        <div class="attribute-item">
-                            <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value"><em>нет данных</em></div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value"><em>нет данных</em></div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value"><em>нет данных</em></div>
+                            <div class="attribute-value">${wordData.lemma || '<em>не указано</em>'}</div>
                         </div>
                     </div>
                 `;
             }
+            // Если данных нет - ничего не делаем, информация не показывается
         }
 
         async function loadTextContent(filePath) {
             const textContent = document.getElementById('textContent');
             textContent.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
-            
-            try {
+                
+                try {
                 const response = await fetch(filePath);
                 if (!response.ok) throw new Error('Файл не найден');
-                
+        
                 const data = await response.json();
-                
-                // Сохраняем данные о словах (ожидаем массив)
-                if (Array.isArray(data.words)) {
-                    currentWordData = data.words;
-                } else {
-                    // Преобразуем объект в массив для обратной совместимости
-                    currentWordData = Object.values(data.words || {});
-                }
-                
+        
+                // Сохраняем данные о словах (как объект с ключами-словами)
+                currentWordData = data.words || {};
                 console.log('Загруженные данные о словах:', currentWordData);
-                
+        
                 const text = data.text || '';
-                
+        
                 // Разбиваем на строки
                 const lines = text.split('\n').filter(line => line.trim().length > 0);
-                
+        
                 let formattedHtml = '';
-                let wordIndex = 0;
-                
+        
                 lines.forEach(line => {
                     // Разбиваем на токены (слова и знаки препинания)
                     const tokens = line.match(/(\s+|[^\s]+)/g) || [];
-                    
+            
                     const lineHtml = tokens.map(token => {
                         // Если это пробел - оставляем как есть
                         if (/^\s+$/.test(token)) {
                             return token;
                         }
-                        
+                
                         // Если это только знаки препинания
                         if (isOnlyPunctuation(token)) {
                             return `<span class="non-clickable">${token}</span>`;
                         }
-                        
+                
                         // Разделяем слово и знаки препинания
                         const parts = splitWordAndPunctuation(token);
-                        
+                
                         let result = '';
-                        
+                
                         // Добавляем начальные знаки препинания (некликабельные)
                         if (parts.leading) {
                             result += `<span class="non-clickable">${parts.leading}</span>`;
                         }
-                        
+                
                         // Обрабатываем само слово
                         if (parts.word) {
-                            // Проверяем, есть ли данные для этого слова по индексу
-                            const hasData = currentWordData && currentWordData[wordIndex] !== undefined;
-                            
+                            // Проверяем, есть ли ключ с таким словом в объекте currentWordData
+                            const hasData = currentWordData && currentWordData.hasOwnProperty(parts.word);
+                    
                             const className = hasData ? 'word-marked' : 'word-unmarked';
-                            result += `<span class="${className}" data-index="${wordIndex}">${parts.word}</span>`;
-                            
-                            // Увеличиваем индекс слова только если это действительно слово (не пунктуация)
-                            wordIndex++;
+                            result += `<span class="${className}" data-word="${parts.word}">${parts.word}</span>`;
                         }
-                        
+                
                         // Добавляем конечные знаки препинания (некликабельные)
                         if (parts.trailing) {
                             result += `<span class="non-clickable">${parts.trailing}</span>`;
                         }
-                        
+                
                         return result;
                     }).join('');
-                    
+            
                     formattedHtml += `<p>${lineHtml}</p>`;
                 });
-                
+        
                 textContent.innerHTML = formattedHtml || '<p>[Пустой файл]</p>';
-                
+        
                 setupWordClickHandlers();
-                
+        
                 updateStats();
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
