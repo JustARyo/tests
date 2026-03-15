@@ -39,12 +39,6 @@
             padding-bottom: 10px;
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 25px;
-            font-style: italic;
-        }
-
         .language-section {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -69,9 +63,6 @@
             border: 2px solid transparent;
             width: 100%;
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .lang-btn:hover {
@@ -107,9 +98,6 @@
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #2a5298;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .file-list {
@@ -211,19 +199,36 @@
             margin-bottom: 0;
         }
 
-        .text-content span {
-            cursor: default;
-        }
-
-        .text-content span.clickable-word {
+        /* Стили для разных типов слов */
+        .text-content span.word-marked {
+            color: #2e7d32; /* Темно-зеленый */
             cursor: pointer;
             transition: background-color 0.2s;
+            font-weight: 500;
+        }
+        
+        .text-content span.word-marked:hover {
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            outline: 1px solid #2e7d32;
         }
 
-        .text-content span.clickable-word:hover {
-            background-color: #e6f7ff;
+        .text-content span.word-unmarked {
+            color: #c62828; /* Темно-красный */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+        
+        .text-content span.word-unmarked:hover {
+            background-color: #ffebee;
             border-radius: 4px;
-            outline: 1px solid #1890ff;
+            outline: 1px solid #c62828;
+        }
+
+        .text-content span.non-clickable {
+            color: #000000; /* Черный */
+            cursor: default;
         }
 
         .word-info-panel {
@@ -394,16 +399,6 @@
             text-decoration: underline;
         }
 
-        .note {
-            background: #e8f0fe;
-            border-left: 4px solid #2a5298;
-            padding: 15px 20px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            color: #1e3c72;
-        }
-
         .loading {
             text-align: center;
             padding: 50px;
@@ -445,7 +440,7 @@
             <div id="textDisplay" class="text-display">
                 <div class="text-header">
                     <span class="text-title" id="currentTextTitle"></span>
-                    <button class="info-button" id="textInfoBtn" title="Информация о тексте">?</button>
+                    <button class="info-button" id="textInfoBtn" title="Информация о тексте">i</button>
                 </div>
                 <div class="text-content" id="textContent">
                     <div class="empty-state">
@@ -521,10 +516,10 @@
             }
         };
 
-        let currentLanguage = 'ter';
+        let currentLanguage = 'kildin'; // Изменил на кильдинский для тестирования
         let currentFileId = null;
         let currentFileName = '';
-        let currentWordData = null; // Данные о словах для текущего текста
+        let currentWordData = null;
 
         const modal = document.getElementById('textInfoModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
@@ -597,68 +592,84 @@
             loadTextContent(filePath);
         }
 
-        function isClickableWord(word) {
-            // Проверяем, является ли слово кликабельным (не состоит только из дефисов и слешей)
-            // Игнорируем последовательности из символов: -, /, \, а также их комбинации
-            return !/^[\-\/\\]+$/.test(word);
+        // Функция для очистки слова от знаков препинания
+        function cleanWord(word) {
+            return word.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+$|^[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+/g, '');
+        }
+
+        // Проверка, является ли токен знаком препинания или служебным символом
+        function isPunctuation(token) {
+            return /^[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+$/.test(token);
         }
 
         function setupWordClickHandlers() {
-            const words = document.querySelectorAll('.text-content span[data-word]');
+            const words = document.querySelectorAll('.text-content span.word-marked, .text-content span.word-unmarked');
             words.forEach(span => {
                 span.addEventListener('click', (e) => {
-                    const word = e.target.textContent;
-                    const wordKey = e.target.dataset.word;
-                    showWordInfo(word, wordKey);
+                    const rawWord = e.target.textContent;
+                    const cleanWordText = cleanWord(rawWord);
+                    showWordInfo(rawWord, cleanWordText);
                 });
             });
         }
 
-        function showWordInfo(word, wordKey) {
+        function showWordInfo(rawWord, cleanWordText) {
             const infoContent = document.getElementById('wordInfoContent');
             
-            // Получаем данные о слове из currentWordData, если они есть
-            const wordInfo = currentWordData && currentWordData[wordKey] ? currentWordData[wordKey] : null;
+            // Ищем слово в данных (сравниваем очищенное слово)
+            let wordInfo = null;
+            let foundKey = null;
+            
+            if (currentWordData) {
+                // Сначала пытаемся найти точное совпадение
+                if (currentWordData[cleanWordText]) {
+                    wordInfo = currentWordData[cleanWordText];
+                    foundKey = cleanWordText;
+                } else {
+                    // Если не нашли, ищем среди ключей, которые содержат наше слово
+                    for (const key in currentWordData) {
+                        if (key.includes(cleanWordText) || cleanWordText.includes(key)) {
+                            wordInfo = currentWordData[key];
+                            foundKey = key;
+                            break;
+                        }
+                    }
+                }
+            }
             
             if (wordInfo) {
                 infoContent.innerHTML = `
-                    <div class="word-display">${word}</div>
+                    <div class="word-display">${rawWord}</div>
                     <div class="word-attributes">
                         <div class="attribute-item">
                             <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value">${wordInfo.pos || '<em>(не указано)</em>'}</div>
+                            <div class="attribute-value">${wordInfo.pos || '<em>не указано</em>'}</div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value">${wordInfo.form || '<em>(не указано)</em>'}</div>
+                            <div class="attribute-value">${wordInfo.form || '<em>не указано</em>'}</div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value">${wordInfo.lemma || '<em>(не указано)</em>'}</div>
+                            <div class="attribute-value">${wordInfo.lemma || '<em>не указано</em>'}</div>
                         </div>
-                        ${wordInfo.note ? `
-                        <div class="attribute-item">
-                            <div class="attribute-label">Примечание</div>
-                            <div class="attribute-value">${wordInfo.note}</div>
-                        </div>
-                        ` : ''}
                     </div>
                 `;
             } else {
                 infoContent.innerHTML = `
-                    <div class="word-display">${word}</div>
+                    <div class="word-display">${rawWord}</div>
                     <div class="word-attributes">
                         <div class="attribute-item">
                             <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value"><em>(нет данных)</em></div>
+                            <div class="attribute-value"><em>нет данных</em></div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value"><em>(нет данных)</em></div>
+                            <div class="attribute-value"><em>нет данных</em></div>
                         </div>
                         <div class="attribute-item">
                             <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value"><em>(нет данных)</em></div>
+                            <div class="attribute-value"><em>нет данных</em></div>
                         </div>
                     </div>
                 `;
@@ -673,31 +684,56 @@
                 const response = await fetch(filePath);
                 if (!response.ok) throw new Error('Файл не найден');
                 
-                // Предполагаем, что файл содержит JSON с текстом и данными о словах
                 const data = await response.json();
                 
-                // Ожидаемая структура: { text: "...", words: { "слово": { pos: "...", form: "...", lemma: "..." } } }
-                const text = data.text || '';
+                // Сохраняем данные о словах
                 currentWordData = data.words || {};
+                console.log('Загруженные данные о словах:', currentWordData); // Для отладки
                 
+                const text = data.text || '';
+                
+                // Разбиваем на строки
                 const lines = text.split('\n').filter(line => line.trim().length > 0);
                 
                 let formattedHtml = '';
                 lines.forEach(line => {
-                    // Разбиваем на слова, сохраняя пробелы и знаки препинания
-                    const words = line.match(/(\s+|[^\s]+)/g) || [];
+                    // Разбиваем на токены (слова и знаки препинания)
+                    const tokens = line.match(/(\s+|[^\s]+)/g) || [];
                     
-                    const lineHtml = words.map(word => {
-                        if (word.trim().length > 0 && !/^\s+$/.test(word)) {
-                            const isClickable = isClickableWord(word);
-                            if (isClickable) {
-                                // Для кликабельных слов добавляем data-атрибут с ключом для поиска в словаре
-                                return `<span class="clickable-word" data-word="${word.replace(/[^\w]/g, '')}">${word}</span>`;
+                    const lineHtml = tokens.map(token => {
+                        // Если это пробел - оставляем как есть
+                        if (/^\s+$/.test(token)) {
+                            return token;
+                        }
+                        
+                        // Если это знак препинания или служебный символ
+                        if (isPunctuation(token)) {
+                            return `<span class="non-clickable">${token}</span>`;
+                        }
+                        
+                        // Это слово - очищаем от знаков препинания для проверки
+                        const cleanToken = cleanWord(token);
+                        
+                        // Проверяем, есть ли данные для этого слова
+                        let hasData = false;
+                        if (currentWordData) {
+                            // Проверяем точное совпадение
+                            if (currentWordData[cleanToken]) {
+                                hasData = true;
                             } else {
-                                return `<span class="non-clickable">${word}</span>`;
+                                // Проверяем частичное совпадение
+                                for (const key in currentWordData) {
+                                    if (key.includes(cleanToken) || cleanToken.includes(key)) {
+                                        hasData = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        return word;
+                        
+                        // Возвращаем span с соответствующим классом
+                        const className = hasData ? 'word-marked' : 'word-unmarked';
+                        return `<span class="${className}" data-clean="${cleanToken}">${token}</span>`;
                     }).join('');
                     
                     formattedHtml += `<p>${lineHtml}</p>`;
@@ -720,11 +756,17 @@
             const chars = text.replace(/\s+/g, '').length;
             const lines = text.split('\n').filter(line => line.trim().length > 0).length;
             
+            // Подсчитываем размеченные и неразмеченные слова
+            const markedCount = document.querySelectorAll('.text-content span.word-marked').length;
+            const unmarkedCount = document.querySelectorAll('.text-content span.word-unmarked').length;
+            
             stats.innerHTML = `
                 <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
                 <span>📝 Строк: ${lines}</span>
                 <span>📏 Символов: ${chars}</span>
-                <span>🔤 Слов: ${words.length}</span>
+                <span>🔤 Всего слов: ${words.length}</span>
+                <span style="color: #2e7d32;">✅ Размечено: ${markedCount}</span>
+                <span style="color: #c62828;">❌ Не размечено: ${unmarkedCount}</span>
             `;
         }
 
@@ -751,722 +793,15 @@
 
         window.onload = function() {
             updateBrowserHeader();
-            loadFileList('ter');
-            document.getElementById('currentTextTitle').textContent = '';
-        };
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Саамские тексты - расширенный просмотр</title>
-    <!-- Подключаем шрифты: Noto Sans и DejaVu Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Noto Sans', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            padding: 30px;
-        }
-
-        h1 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-            font-weight: 600;
-            border-bottom: 3px solid #2a5298;
-            padding-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 25px;
-            font-style: italic;
-        }
-
-        .language-section {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 25px;
-            background: #f0f4f8;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .lang-btn {
-            font-family: 'Noto Sans', sans-serif;
-            padding: 12px 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-            color: #1e3c72;
-            border: 2px solid transparent;
-            width: 100%;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .lang-btn:hover {
-            background: #e3e9f2;
-            transform: translateY(-2px);
-        }
-
-        .lang-btn.active {
-            background: #2a5298;
-            color: white;
-            border-color: #1e3c72;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 280px 1fr 280px;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .file-browser {
-            background: #f0f4f8;
-            border-radius: 10px;
-            padding: 15px;
-            border: 2px solid #d0d9e8;
-            height: fit-content;
-        }
-
-        .browser-header {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #2a5298;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .file-list {
-            list-style: none;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .file-item {
-            padding: 10px 12px;
-            margin-bottom: 5px;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .file-item:hover {
-            background: #e3e9f2;
-            transform: translateX(3px);
-            border-color: #2a5298;
-        }
-
-        .file-item.active {
-            background: #2a5298;
-            color: white;
-            border-color: #1e3c72;
-        }
-
-        .file-icon {
-            margin-right: 8px;
-            font-size: 16px;
-        }
-
-        .text-display {
-            background: #f8fafd;
-            border-radius: 10px;
-            padding: 25px;
-            min-height: 600px;
-            border: 2px solid #d0d9e8;
-            line-height: 1.8;
-            font-size: 16px;
-            font-family: 'Noto Sans', sans-serif;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .text-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #d0d9e8;
-        }
-
-        .text-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e3c72;
-        }
-
-        .info-button {
-            background: none;
-            border: 2px solid #2a5298;
-            color: #2a5298;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .info-button:hover {
-            background: #2a5298;
-            color: white;
-        }
-
-        .text-content {
-            font-size: 16px;
-            font-family: 'DejaVu Sans', 'Noto Sans', sans-serif;
-        }
-
-        .text-content p {
-            margin-bottom: 20px;
-        }
-
-        .text-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .text-content span.clickable-word {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .text-content span.clickable-word:hover {
-            background-color: #e6f7ff;
-            border-radius: 4px;
-            outline: 1px solid #1890ff;
-        }
-
-        .text-content span.non-clickable {
-            cursor: default;
-        }
-
-        .word-info-panel {
-            background: #f0f4f8;
-            border-radius: 10px;
-            padding: 15px;
-            border: 2px solid #d0d9e8;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-        }
-
-        .word-info-header {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #2a5298;
-        }
-
-        .word-display {
-            font-size: 32px;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 20px;
-            text-align: center;
-            word-break: break-word;
-            font-family: 'DejaVu Sans', 'Noto Sans', sans-serif;
-        }
-
-        .word-attributes {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .attribute-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 4px solid #2a5298;
-        }
-
-        .attribute-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .attribute-value {
-            font-size: 16px;
-            color: #1e3c72;
-            font-weight: 500;
-            min-height: 24px;
-            font-family: 'DejaVu Sans', 'Noto Sans', sans-serif;
-        }
-
-        .empty-state-small {
-            color: #999;
-            text-align: center;
-            font-style: italic;
-            padding: 20px;
-            font-size: 14px;
-        }
-
-        .empty-state {
-            color: #999;
-            text-align: center;
-            font-style: italic;
-            padding: 60px 20px;
-            font-size: 16px;
-        }
-
-        .stats {
-            margin-top: 15px;
-            color: #555;
-            font-size: 14px;
-            display: flex;
-            gap: 25px;
-            justify-content: flex-end;
-            padding: 10px;
-            background: #f0f4f8;
-            border-radius: 8px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #2a5298;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1e3c72;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .modal-close:hover {
-            background: #f0f0f0;
-        }
-
-        .modal-body {
-            line-height: 1.8;
-        }
-
-        .source-info {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8fafd;
-            border-radius: 8px;
-        }
-        
-        .source-link {
-            color: #2a5298;
-            text-decoration: none;
-            font-weight: 500;
-            border-bottom: 1px dashed #2a5298;
-        }
-        
-        .source-link:hover {
-            text-decoration: underline;
-        }
-
-        .note {
-            background: #e8f0fe;
-            border-left: 4px solid #2a5298;
-            padding: 15px 20px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            color: #1e3c72;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-        }
-
-        .error {
-            color: #d32f2f;
-            text-align: center;
-            padding: 30px;
-            background: #ffebee;
-            border-radius: 8px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📚 Корпус саамских языков Кольского полуострова</h1>
-        
-        <div class="language-section">
-            <button class="lang-btn" data-lang="skolt">Колтта-саамский</button>
-            <button class="lang-btn" data-lang="akkala">Аккала-саамский</button>
-            <button class="lang-btn" data-lang="kildin">Кильдин-саамский</button>
-            <button class="lang-btn active" data-lang="ter">Тер-саамский</button>
-        </div>
-
-        <div class="main-content">
-            <div class="file-browser">
-                <div class="browser-header" id="browserHeader">
-                    📁 Файлы: тер-саамский
-                </div>
-                <ul class="file-list" id="fileList">
-                    <li class="file-item" style="background: transparent; cursor: default; color: #666;">
-                        ⏳ Загрузка...
-                    </li>
-                </ul>
-            </div>
-
-            <div id="textDisplay" class="text-display">
-                <div class="text-header">
-                    <span class="text-title" id="currentTextTitle"></span>
-                    <button class="info-button" id="textInfoBtn" title="Информация о тексте">?</button>
-                </div>
-                <div class="text-content" id="textContent">
-                    <div class="empty-state">
-                        👆 Выберите файл в браузере слева
-                    </div>
-                </div>
-            </div>
-
-            <div class="word-info-panel" id="wordInfoPanel">
-                <div class="word-info-header">
-                    📖 Информация о слове
-                </div>
-                <div id="wordInfoContent">
-                    <div class="empty-state-small">
-                        👆 Нажмите на любое слово в тексте
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="stats" class="stats"></div>
-    </div>
-
-    <div class="modal" id="textInfoModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">ℹ️ Информация о тексте</span>
-                <button class="modal-close" id="closeModalBtn">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <div class="source-info">
-                    <strong>Источник:</strong><br>
-                    <a href="https://saami.su/biblioteka-saamskij-yazyk/obraztsy-saamskoj-rechi.html" 
-                       target="_blank" 
-                       class="source-link">
-                        Керт Г. М., Зайков П. М. Образцы саамской речи / науч. ред. В. З. Панфилов; сост. Г. М. Керт, П. М. Зайков. — Петрозаводск: Карельский филиал АН СССР, Институт языка, литературы и истории, 1988. — С. 12. — 192 с.
-                    </a>
-                </div>
-                <p>
-                    <strong>Сведения об информанте:</strong><br>
-                    <em>(не указано)</em>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const languageData = {
-            skolt: {
-                name: "колтта-саамский",
-                texts: [
-                    { id: "skolt", title: "Текст 1", file: "texts/skolt/example.txt" }
-                ]
-            },
-            akkala: {
-                name: "аккала-саамский",
-                texts: [
-                    { id: "akkala1", title: "Как пекли хлеб?", file: "texts/akkala/kert-1.txt" },
-                    { id: "akkala2", title: "Как солили рыбу?", file: "texts/akkala/kert-2.txt" }
-                ]
-            },
-            kildin: {
-                name: "кильдин-саамский",
-                texts: [
-                    { id: "kildin", title: "Текст 1", file: "texts/kildin/example.txt" }
-                ]
-            },
-            ter: {
-                name: "тер-саамский",
-                texts: [
-                    { id: "ter", title: "Текст 1", file: "texts/ter/example.txt" }
-                ]
-            }
-        };
-
-        let currentLanguage = 'ter';
-        let currentFileId = null;
-        let currentFileName = '';
-
-        const modal = document.getElementById('textInfoModal');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-
-        function openModal() {
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            modal.classList.remove('active');
-        }
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
-
-        closeModalBtn.addEventListener('click', closeModal);
-
-        function updateBrowserHeader() {
-            const header = document.getElementById('browserHeader');
-            header.textContent = `📁 Файлы: ${languageData[currentLanguage].name}`;
-        }
-
-        function loadFileList(lang) {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<li class="file-item" style="background: transparent; cursor: default; color: #666;">⏳ Загрузка файлов...</li>';
-            
-            setTimeout(() => {
-                fileList.innerHTML = '';
-                
-                const texts = languageData[lang].texts;
-                
-                if (texts.length === 0) {
-                    fileList.innerHTML = '<li class="file-item" style="background: transparent; cursor: default; color: #999;">📭 Нет файлов</li>';
-                    return;
+            // Для тестирования сразу загружаем кильдинский текст
+            currentLanguage = 'kildin';
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.lang === 'kildin') {
+                    btn.classList.add('active');
                 }
-                
-                texts.forEach(text => {
-                    const li = document.createElement('li');
-                    li.className = 'file-item';
-                    if (currentFileId === text.id) {
-                        li.classList.add('active');
-                    }
-                    li.innerHTML = `<span class="file-icon">📄</span> ${text.title}`;
-                    li.dataset.id = text.id;
-                    li.dataset.file = text.file;
-                    li.dataset.title = text.title;
-                    li.addEventListener('click', () => selectFile(text.id, text.file, text.title, li));
-                    fileList.appendChild(li);
-                });
-            }, 100);
-        }
-
-        function selectFile(fileId, filePath, fileTitle, element) {
-            document.querySelectorAll('.file-item').forEach(item => {
-                item.classList.remove('active');
             });
-            
-            if (element) {
-                element.classList.add('active');
-            }
-            
-            currentFileId = fileId;
-            currentFileName = fileTitle;
-            
-            document.getElementById('currentTextTitle').textContent = fileTitle;
-            
-            loadTextContent(filePath);
-        }
-
-        function isClickableWord(word) {
-            // Проверяем, является ли слово кликабельным (не состоит только из дефисов и слешей)
-            return !/^[\-\/\\]+$/.test(word);
-        }
-
-        function setupWordClickHandlers() {
-            const words = document.querySelectorAll('.text-content span.clickable-word');
-            words.forEach(span => {
-                span.addEventListener('click', (e) => {
-                    const word = e.target.textContent;
-                    showWordInfo(word);
-                });
-            });
-        }
-
-        function showWordInfo(word) {
-            const infoContent = document.getElementById('wordInfoContent');
-            
-            infoContent.innerHTML = `
-                <div class="word-display">${word}</div>
-                <div class="word-attributes">
-                    <div class="attribute-item">
-                        <div class="attribute-label">Часть речи</div>
-                        <div class="attribute-value"><em>(не указано)</em></div>
-                    </div>
-                    <div class="attribute-item">
-                        <div class="attribute-label">Грамматическая форма</div>
-                        <div class="attribute-value"><em>(не указано)</em></div>
-                    </div>
-                    <div class="attribute-item">
-                        <div class="attribute-label">Начальная форма</div>
-                        <div class="attribute-value"><em>(не указано)</em></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function loadTextContent(filePath) {
-            const textContent = document.getElementById('textContent');
-            textContent.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
-            
-            try {
-                const response = await fetch(filePath);
-                if (!response.ok) throw new Error('Файл не найден');
-                const text = await response.text();
-                
-                const lines = text.split('\n').filter(line => line.trim().length > 0);
-                
-                let formattedHtml = '';
-                lines.forEach(line => {
-                    // Разбиваем на слова, сохраняя пробелы и знаки препинания
-                    const words = line.match(/(\s+|[^\s]+)/g) || [];
-                    
-                    const lineHtml = words.map(word => {
-                        if (word.trim().length > 0 && !/^\s+$/.test(word)) {
-                            const isClickable = isClickableWord(word);
-                            const className = isClickable ? 'clickable-word' : 'non-clickable';
-                            return `<span class="${className}">${word}</span>`;
-                        }
-                        return word;
-                    }).join('');
-                    
-                    formattedHtml += `<p>${lineHtml}</p>`;
-                });
-                
-                textContent.innerHTML = formattedHtml || '<p>[Пустой файл]</p>';
-                
-                setupWordClickHandlers();
-                
-                updateStats(text);
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                textContent.innerHTML = `<div class="error">❌ Ошибка загрузки файла: ${filePath}<br>Убедитесь, что файл существует в папке texts/.</div>`;
-            }
-        }
-
-        function updateStats(text) {
-            const stats = document.getElementById('stats');
-            const words = text.split(/\s+/).filter(word => word.length > 0 && !/^[\-\/\\]+$/.test(word));
-            const chars = text.replace(/\s+/g, '').length;
-            const lines = text.split('\n').filter(line => line.trim().length > 0).length;
-            
-            stats.innerHTML = `
-                <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
-                <span>📝 Строк: ${lines}</span>
-                <span>📏 Символов: ${chars}</span>
-                <span>🔤 Слов: ${words.length}</span>
-            `;
-        }
-
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                currentLanguage = this.dataset.lang;
-                currentFileId = null;
-                
-                updateBrowserHeader();
-                loadFileList(currentLanguage);
-                
-                document.getElementById('currentTextTitle').textContent = '';
-                document.getElementById('textContent').innerHTML = '<div class="empty-state">👆 Выберите файл в браузере слева</div>';
-                document.getElementById('wordInfoContent').innerHTML = '<div class="empty-state-small">👆 Нажмите на любое слово в тексте</div>';
-                document.getElementById('stats').innerHTML = '';
-            });
-        });
-
-        document.getElementById('textInfoBtn').addEventListener('click', openModal);
-
-        window.onload = function() {
-            updateBrowserHeader();
-            loadFileList('ter');
+            loadFileList('kildin');
             document.getElementById('currentTextTitle').textContent = '';
         };
     </script>
