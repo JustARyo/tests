@@ -654,121 +654,122 @@
         }
 
         function setupWordClickHandlers() {
-            const words = document.querySelectorAll('.text-content span.word-marked, .text-content span.word-unmarked');
-            words.forEach(span => {
-                span.addEventListener('click', (e) => {
-                    const rawWord = e.target.textContent;
-                    const wordKey = e.target.dataset.word;
-                    showWordInfo(rawWord, wordKey);
-                });
-            });
-        }
+    const words = document.querySelectorAll('.text-content span.word-marked, .text-content span.word-unmarked');
+    words.forEach(span => {
+        span.addEventListener('click', (e) => {
+            const rawWord = e.target.textContent;
+            const wordIndex = e.target.dataset.index;
+            showWordInfo(rawWord, wordIndex);
+        });
+    });
+}
 
-        function showWordInfo(rawWord, wordKey) {
-            const infoContent = document.getElementById('wordInfoContent');
+        function showWordInfo(rawWord, wordIndex) {
+    const infoContent = document.getElementById('wordInfoContent');
     
-            // Берем данные напрямую из JSON по ключу (самому слову)
-            const wordData = currentWordData[wordKey];
+    // Берем данные из массива по индексу
+    const wordData = currentWordData[wordIndex];
     
-            if (wordData) {
-                infoContent.innerHTML = `
-                    <div class="word-display">${rawWord}</div>
-                    <div class="word-attributes">
-                        <div class="attribute-item">
-                            <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value">${wordData.pos || '<em>не указано</em>'}</div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value">${wordData.form || '<em>не указано</em>'}</div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value">${wordData.lemma || '<em>не указано</em>'}</div>
-                        </div>
-                    </div>
-                `;
-            }
-            // Если данных нет - ничего не делаем, информация не показывается
-        }
+    if (wordData) {
+        infoContent.innerHTML = `
+            <div class="word-display">${rawWord}</div>
+            <div class="word-attributes">
+                <div class="attribute-item">
+                    <div class="attribute-label">Часть речи</div>
+                    <div class="attribute-value">${wordData.pos || '<em>не указано</em>'}</div>
+                </div>
+                <div class="attribute-item">
+                    <div class="attribute-label">Грамматическая форма</div>
+                    <div class="attribute-value">${wordData.form || '<em>не указано</em>'}</div>
+                </div>
+                <div class="attribute-item">
+                    <div class="attribute-label">Начальная форма</div>
+                    <div class="attribute-value">${wordData.lemma || '<em>не указано</em>'}</div>
+                </div>
+            </div>
+        `;
+    }
+}
 
         async function loadTextContent(filePath) {
-            const textContent = document.getElementById('textContent');
-            textContent.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
-                
-                try {
-                const response = await fetch(filePath);
-                if (!response.ok) throw new Error('Файл не найден');
+    const textContent = document.getElementById('textContent');
+    textContent.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
+    
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error('Файл не найден');
         
-                const data = await response.json();
+        const data = await response.json();
         
-                // Сохраняем данные о словах (как объект с ключами-словами)
-                currentWordData = data.words || {};
-                console.log('Загруженные данные о словах:', currentWordData);
+        // Сохраняем данные о словах (массив)
+        currentWordData = data.words || [];
+        console.log('Загруженные данные о словах:', currentWordData);
         
-                const text = data.text || '';
+        const text = data.text || '';
         
-                // Разбиваем на строки
-                const lines = text.split('\n').filter(line => line.trim().length > 0);
+        // Разбиваем на строки
+        const lines = text.split('\n').filter(line => line.trim().length > 0);
         
-                let formattedHtml = '';
+        let formattedHtml = '';
+        let wordIndex = 0;
         
-                lines.forEach(line => {
-                    // Разбиваем на токены (слова и знаки препинания)
-                    const tokens = line.match(/(\s+|[^\s]+)/g) || [];
+        lines.forEach(line => {
+            // Разбиваем на токены (слова и знаки препинания)
+            const tokens = line.match(/(\s+|[^\s]+)/g) || [];
             
-                    const lineHtml = tokens.map(token => {
-                        // Если это пробел - оставляем как есть
-                        if (/^\s+$/.test(token)) {
-                            return token;
-                        }
+            const lineHtml = tokens.map(token => {
+                // Если это пробел - оставляем как есть
+                if (/^\s+$/.test(token)) {
+                    return token;
+                }
                 
-                        // Если это только знаки препинания
-                        if (isOnlyPunctuation(token)) {
-                            return `<span class="non-clickable">${token}</span>`;
-                        }
+                // Если это только знаки препинания
+                if (isOnlyPunctuation(token)) {
+                    return `<span class="non-clickable">${token}</span>`;
+                }
                 
-                        // Разделяем слово и знаки препинания
-                        const parts = splitWordAndPunctuation(token);
+                // Разделяем слово и знаки препинания
+                const parts = splitWordAndPunctuation(token);
                 
-                        let result = '';
+                let result = '';
                 
-                        // Добавляем начальные знаки препинания (некликабельные)
-                        if (parts.leading) {
-                            result += `<span class="non-clickable">${parts.leading}</span>`;
-                        }
+                // Добавляем начальные знаки препинания
+                if (parts.leading) {
+                    result += `<span class="non-clickable">${parts.leading}</span>`;
+                }
                 
-                        // Обрабатываем само слово
-                        if (parts.word) {
-                            // Проверяем, есть ли ключ с таким словом в объекте currentWordData
-                            const hasData = currentWordData && currentWordData.hasOwnProperty(parts.word);
+                // Обрабатываем само слово
+                if (parts.word) {
+                    // Проверяем, есть ли данные для этого слова по индексу
+                    const hasData = currentWordData && currentWordData[wordIndex] !== undefined;
                     
-                            const className = hasData ? 'word-marked' : 'word-unmarked';
-                            result += `<span class="${className}" data-word="${parts.word}">${parts.word}</span>`;
-                        }
+                    const className = hasData ? 'word-marked' : 'word-unmarked';
+                    result += `<span class="${className}" data-index="${wordIndex}">${parts.word}</span>`;
+                    
+                    wordIndex++;
+                }
                 
-                        // Добавляем конечные знаки препинания (некликабельные)
-                        if (parts.trailing) {
-                            result += `<span class="non-clickable">${parts.trailing}</span>`;
-                        }
+                // Добавляем конечные знаки препинания
+                if (parts.trailing) {
+                    result += `<span class="non-clickable">${parts.trailing}</span>`;
+                }
                 
-                        return result;
-                    }).join('');
+                return result;
+            }).join('');
             
-                    formattedHtml += `<p>${lineHtml}</p>`;
-                });
+            formattedHtml += `<p>${lineHtml}</p>`;
+        });
         
-                textContent.innerHTML = formattedHtml || '<p>[Пустой файл]</p>';
+        textContent.innerHTML = formattedHtml || '<p>[Пустой файл]</p>';
         
-                setupWordClickHandlers();
+        setupWordClickHandlers();
         
-                updateStats();
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                textContent.innerHTML = `<div class="error">❌ Ошибка загрузки файла: ${filePath}<br>Убедитесь, что файл существует и имеет правильный формат JSON.</div>`;
-            }
-        }
-
+        updateStats();
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        textContent.innerHTML = `<div class="error">❌ Ошибка загрузки файла: ${filePath}<br>Убедитесь, что файл существует и имеет правильный формат JSON.</div>`;
+    }
+}
         function updateStats() {
             const stats = document.getElementById('stats');
             
