@@ -46,10 +46,10 @@
         }
 
         .language-section {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-bottom: 25px;
-            flex-wrap: wrap;
             background: #f0f4f8;
             padding: 15px;
             border-radius: 10px;
@@ -57,7 +57,7 @@
 
         .lang-btn {
             font-family: 'Noto Sans', sans-serif;
-            padding: 12px 20px;
+            padding: 12px 10px;
             border: none;
             border-radius: 8px;
             font-size: 15px;
@@ -67,8 +67,11 @@
             background: white;
             color: #1e3c72;
             border: 2px solid transparent;
-            flex: 1;
-            min-width: 200px;
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .lang-btn:hover {
@@ -177,12 +180,16 @@
             color: #1e3c72;
         }
 
-        .text-meta {
-            display: flex;
-            gap: 15px;
-            color: #2a5298;
-            font-size: 14px;
-            margin-bottom: 10px;
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            padding: 30px;
         }
     </style>
 </head>
@@ -191,16 +198,16 @@
         <h1>📚 Саамские тексты</h1>
         
         <div class="language-section">
-            <button class="lang-btn active" data-lang="skolt" onclick="selectLanguage('skolt', this)">Колтта-саамский</button>
-            <button class="lang-btn" data-lang="akkala" onclick="selectLanguage('akkala', this)">Аккала-саамский</button>
-            <button class="lang-btn" data-lang="kildin" onclick="selectLanguage('kildin', this)">Кильдин-саамский</button>
-            <button class="lang-btn" data-lang="ter" onclick="selectLanguage('ter', this)">Тер-саамский</button>
+            <button class="lang-btn" data-lang="skolt">Колтта-саамский</button>
+            <button class="lang-btn" data-lang="akkala">Аккала-саамский</button>
+            <button class="lang-btn" data-lang="kildin">Кильдин-саамский</button>
+            <button class="lang-btn active" data-lang="ter">Тер-саамский</button>
         </div>
 
         <div class="texts-section">
             <div class="texts-header">
-                <span class="texts-title" id="languageTitle">Тексты на колтта-саамском</span>
-                <select id="textSelector" onchange="showSelectedText()">
+                <span class="texts-title" id="languageTitle">Тексты на тер-саамском</span>
+                <select id="textSelector">
                     <option value="">-- Выберите текст --</option>
                 </select>
             </div>
@@ -213,173 +220,148 @@
 
             <div id="stats" class="stats"></div>
         </div>
-
-        <div class="note">
-            <strong>📝 Примечание:</strong> Тексты представлены в фонетической транскрипции.
-        </div>
     </div>
 
     <script>
-        // Данные для всех языков
+        // Структура языков и их текстовых файлов
         const languageData = {
             skolt: {
                 name: "Колтта-саамский",
-                texts: {
-                    text1: {
-                        title: "Текст 1",
-                        content: "<p>Здесь будут тексты на колтта-саамском языке.</p><p>Этот раздел находится в разработке.</p>"
-                    },
-                    text2: {
-                        title: "Текст 2",
-                        content: "<p>Пример текста на колтта-саамском языке.</p>"
-                    }
-                }
+                texts: [
+                    { id: "skolt", title: "Текст 1", file: "texts/skolt/example.txt" }
+                ]
             },
             akkala: {
                 name: "Аккала-саамский",
-                texts: {
-                    
-                    text1: {
-                        title: "Как пекли хлеб",
-                        content: `<p>maxt paštkui͔ĺ pāštɛt˙<br>
-– nu vot mij čas titti͔m ĺiem // ĺīm titti͔m // nō jɛsĺ gɛ̄лk pāštkuεĺ pāšti͔ / čuatak šīG tōлл gɛ̄лk // toлл mokom štobi͔ son ĺihči žār // nu snačāлa / jεsli pāštkui͔ĺ pāštεD mājḱḱ vi̮brat́ / štobi̮ vuj‿mājkk ĺihči // čāлak mājḱi / tīčak vūj‿čŭŏĺĺ ĺi // ti̮n kuodak pāšti͔ // i potom čumstak / i maɳɳa ti̮n mājḱ pōɯ̭tak tōл gūrri͔ srāzu // ńeṕśt́ak // ńeṕčaś tuijāk srazu / ńeṕčas // i maɳɳa tob tui̭jāk / nu maxt ńeṕśt́ak mājk // i tieDti͔š / kun b́ella pīi̭ji pāšti͔ // vūśta ṕē˓ät čieĺ Dāk b́ĭĕlla / mājḱḱ / štobi͔ načit čieĺĺtāx̄t pāštaj // a maɳɳa / užε pōńńe nūmb b́eллa // ti̮n b́ĭĕллa pāštap š́iɣ́ ĺi // žār doлžen š́īg žār ĺiči // maɳɳa pōɳлak čōɯ̭j b́eллa // čōɯ̭j b́ĭĕллa pāštji / maɳɳa pōɳлak užɛ nūmb b́ĭĕллa oṕat́ // numb b́ĭĕллa // numb b́ĭĕĺĺ pāšti͔ / maɳɳa sieĺj pāštak // i kŭŏśś in puk in pāštaj gōdnaллa / maɳɳa vuεjvⁱ // vuεjv pājd˙a͕t˙ pāštkui͔ĺ ḿenda / i vuεjv v́eл pāštɛt˙ / potomu što vuɛjvi tōžε pōra͕t˙ // vuejvist sūvd eĺ‿ĺa // i vot kŭŏśś / užɛ / kŭŏssaj maxt sonn pāšti͔ čumm puk maɳɳa // ɛj čūmma // kŭŏssaj / što maxt sonn gōdnaллᵃ pāšti͔ / sū vā͕ĺdi͔t ḿēnda ji͔n˙n˙ // i maɳɳa ṕē˓et // jarka ĺei̭jiš / åńń taŕeлka ĺie / a jarka ĺei̭jiš kārri // kārri ɛлл ṕē˓et i vuonǯ́at˙ ḿenda // i paštati͔ // nuotsi͔st poada͕t˙ pāštɛt˙ / jɛ ī̮ɯ̭t mājḱḱ // a mājḱḱ kūɯ̭t tihčem лōGk mājkki pāštɛt // muɯ̭tɛm śāḿj ĺī // idaлǯa pāštkui͔ĺ kuod́jɛt˙ // vot ɛto ĺie // ti̮t ĺi mājḱḱ / ti̮t i pāškui͔ĺĺ tom // a maɳɳa vεл pāštɛt˙ tuarki / tuarɛk ti̮t ĺi nūmB / nūmb‿naллa pāštɛt // nīрčas // i sīḿ / ij mājḱḱ / a šāh́ṕ / šāhṕṕik ĺie // šāh́ṕki ṕē˓et лui͔nt́et˙ // i maɳɳa ī̮ɯ̭t / i̮ɯ̭t paijas / ńēpčez εлл ṕe˓ät / koɯ̭̄m šahpik iĺi ńēĺĺ / i pāštεt˙ / nu͔tt / tŭărrεst ij maxt majhkk / a tŭărrεst pāštεt˙ // i vot tεD˙ / tuar̀ɛk id̀āлǯa // i͔ddɛĺ koʒjεt˙ / tom čāj jūkka / dak lējp εĺ‿ĺa // jarka to ĺejp εĺ‿ĺamma / vot sijtεn˙ tuarε̆kin˙ / čāj jūga͕t / kuεĺ pōrat˙ // ti̮t ĺi tiʰD kŭε̆ĺĺ nuɛht‿kŭε̆ĺĺ jōhtti͔š nuɛh́t˙ kuɛĺ // i vot nu͔tt jarka nu͔tt i jīĺĺiš // εĺ‿ĺamma v́et˙ ĺējp // nī͔ / nu čāj jarka ĺei̭jiš / vā͕ĺdεt˙ jānap // a ĺejb εj kāžnε ṕejv pāštε̆ // kośt˙ ĺējb vaлdak? / i vot pεj kui͔ĺin˙ / nu͔tt i jīĺĺiš // pāš̄ti͔š i pāštkui͔ĺi / pāštεš / tuārki // i nu͔tt i pārna nu͔tt / jiĺĺiš / parna ši͔n̄t̆tiš // i åńń vot ĺai tietti͔ / t́i vuajḿ ōлmi͔ši͔n˙ ĺij / di͔k pεj mūštaл / vot jarka jieĺim / kŭε̆ĺĺin˙ / a åńń jāĺat˙ / i puk ĺii̭ji // a jε tōĹḱjε̆ što maxt mij jārka jīĺim //</p>`
-                    },
-                    text2: {
-                        title: "Как солили рыбу",
-                        content: `<p>maxt kuɛĺ soллi͔š?<br>
-- kuεĺ sŭŏллī͔š? / sŭŏллī͔š // lei̭jiš tui̭jāma maxt iĺi pūrn // načit tui̭jāma / mokom sruB mandi͔st // toB pii̭miš puī͔cc // лōhk ĺi di̮ puk krī̮ša ĺi di̮ // i toB man̄ta ṕe˓et pui̭ci͔ / suoллɛ̄t˙ // i nu͔tt kŭɛ̆ĺĺ načit ij tōr / mi̮n šɛ̄лam // taĺĺ Baji1 maɳɳa pōrat˙ // ńuskɛm Borri͔m kŭɛ̆ĺĺ //<br>
-- maxt kōšktat?<br>
-- a kuɛĺ koškīš // t́oDDa koškīš nu͔kkiš //<br>
-- a maxt?<br>
-- t́oDDa / kŭɛ̆śś vi̮лл čuarr εĺ‿ĺa // čūpɛt˙ nu͔kkiš / maɳɳa to ṕā˓ät ɛлл pajлapɛš kozno / kōʒɛt˙ / i ṕe˓et son košk // i maɳɳa košk‿kŭɛ̆ĺĺin˙ tožɛ čāj jūGa͕t˙ //<br>
-- suɛĺ pii̭jɛš?<br>
-- suɛĺ / maɳɳa ob́azat́eĺno // suoĺ // no suoĺ / maxt måinsti̮ĺĺiš / suoĺ ĺi čoto toлā / ĺij // suoĺĺ što jɛ sārni͔š što maxt suoĺĺt̆ta pōrri͔s //suoĺĺ na˓ɛrno / užɛ t́ie āĺGi jarka jiɛĺĺi / i nu͔tt suoĺjin˙ ĺai //<br>
-- a vuɛnǯ́ kōškɛš?<br>
-- vuɛnǯ́ tožɛ koškɛ̄š / tožɛ maxt i kuɛl // čūṕat˙ potońšɛ kuśki / i ōṷGas koʒti͔ // t́edda toko kōšk // toko jɛ kūh́ḱa / poka čuarr εĺ‿ĺa // i maɳɳa koškt́ass i košk‿vuɛnč // tožɛ tam ĺējB‿sāj čaj jūGa͕t˙ // t́assa Go čaj jūGɛškŭăt˙t˙ mi̮jna pōrraD // to muŕGivi̮jm / di͔ kosk‿vi̮nǯ́in˙ / da košk‿kuɛĺen˙ di͔ // ĺējp‿to kažɛn vuor εĺ‿ĺa // vot tɛjn i jiĺĺiš //<br>
-- a mūŕji kōškiš́?<br>
-- a muŕji jɛ // jɛ kōškam // toko mūŕGl nu͔tt ūzzi͔t / ṕē˓et lapsi͔‿siz // a͕j̄tta ṕē˓et // i nu͔t˙t˙ i //<br>
-- a mutti͔m mūŕGi pī˓it?<br>
-- nu vot sīri͔ da jōni͔ // a siŕ ussi͔š čuḿnižvi̮jm / i̮ṷt sāi̭jist // sonn ij n˙u͔tt ān˙di̮nš // čumniž ĺi kŕepost˙ i ńi toлci̮n˙ // i nu͔t˙t˙ maɳɳa pāллi̮š //<br>
-- saxar pii̭jiš?<br>
-- kuośt˙ saxar vā͔ĺdɛt˙? // jɛ pɛ̄ʲnimi͔š // a maɳɳa si̮n taлva pōra͕t˙ // muŕǴi vārɛn˙ / ĺimni͔ ṕē˓et muŕǴi //<br>
-- a лuomnɛ?<br>
-- a лuomnɛ toko // māлo sīji kŭĭ͔ddiš // ṕē˓e tožɛ / kīʰttis // lōmnɛ ūzzɛt // kŭŏśś ĺie лuomnɛ jɛnni͔ / ūzzɛt˙ // ḱieʰt̆tɛt˙ sii̭ji // no / saxar εĺ‿ĺam̆ma / t́ieht̀ɛt˙ // maɳɳa pūi̭cc sī̮z vāлat˙ // i maɳɳa / kŭăśś čaj jūGuškŭăDD / ṕē˓et stōkan // jɛsĺi saxar ĺī / značit tok sāxar / i jūǴat / tožɛ vaŕeńjɛ čaj лuomnɛvi̮jm //<br>
-- a vījn tui̭jiš mūŕǴeśt˙?<br>
-- ńē / jɛ jɛ // toB ɛj‿jɛ tĭĕtmi̮š ńimi̮n // vījn toko sij kośt˙ kon˙d lūɯ̭ti͔śt˙ // tom maɳɳa āĺkiš / van̄˙če vījn kośt˙ // jìǯ́ jɛ̄ tui̭jɛma vījn // ńi tĭĕʰt̀mi̮š ńit́i dažɛ maxt vījn tui̭jiš //<br>
-- a muttɛm āssi͔ ɛ̄nniš?<br>
-- a āssi? //muttɛm āssi͔ ɛ̄n˙Diš? // ṕervu načit očeŕet́/ ka͕mme / taĺĺ vāĺenki jεĺ‿ĺam̆ma // ka͕mme ɛn˙niš // ka͕mme nu‿korotḱi ĺie ńuńeguim / ka͕mme // ti̮st paŕḿeśk kīsmi̮š // maɳɳa tūb́ĕŕki i̮nni͔š vot // tūb́eŕki vot kūʰḱḱiś ṕēD‿rai̭ja // maɳɳa jāŕŕ / jāŕi ɛnniš // a jārin˙‿tak ɛto / śo štani̮ poлnost́ju // ṕēD‿rai̭ja / ti̮st mān kammas / a tok maɳɳa ńaɳɳ / puk pī̮rr// tɛt ĺal jāŕŕ // ī̮ / a tōRk saj ĺai pĭä̆c̄k / pohci͔ tuĺjɛśt˙ kuormi̮š // końešno potkлatka to vɛĺĺ εĺ‿ĺa ńimi // ćakk dopusti͔m fufaika / maɳɳa ɛлл pĭĕc̄k // i nu͔tt i vōjmi̮š / rājD jɛnni͔ // a vot vācc ʲεĺ‿ĺam̆ma ńimi̮k / toB samo šūBńik / ĺabo mi̮kna // vācc ĺei̭jiš / oллi̮n˙ koDDiš // nɛzzan koDDiš vāci͔ // toB ĺei̭jiš vāci͔ jijiś // kažni͔st ĺei̭jiš лamppas / i sij лampsɛn˙ ōллi͔ // лampsi͔ ṕaćkīš́ ōллi͔ / i nu͔t˙t˙ noskī / puk jīč tui̭jīš // toĺko vot εĺ‿ĺam̆ma ... // ĺai vot mōštam / čto načit˙ / rubaška ĺei̭jiš mat́erjāлi͔st // vōśśa͕t˙ mateŕjaлi͔ jīč // toB Gotovoi εĺ‿ĺam̆ma toBn / a jīč kuarɛt˙ // rubaška / pājdi͔ / v́erxńei rubāška / pūɯ̭si͔ / jīč kūrri͔š // końešno / jɛ nu͔t˙t˙ / maxt åńń / tam značit kĺōš / iĺi tam // ĺiž bi̮ pūɯ̭s jič / jōл̄ka č́ok̄č́e // vot nač́it ɛn˙n˙iš miśt˙ // mokom āssi͔ ĺei̭jiš //<br>
-- a maxt kurri͔š rōvvɛ?<br>
-- a rovvɛ kurri͔š / lampsi͔ / vierci͔ kōn˙Da͕t˙ / vīrc // a vierc vuɛnǯ́ jɛ pōrmuš // lampaz vuonǯ́ jārka miśt˙ jɛ pōrmuš // vīrc kōn˙Da͕t˙ / štobi̮ ɛto rōvvi͔ kŭŏrri͔ // a vuonǯ́ ān˙dɛt˙ pīni͔D // jɛ pōrmuš / dažɛ obi̮čaj εĺ‿ĺam̆ma / štobi̮ лamp̄az‿vuonč‿porrɛ // no maɳɳa mun˙n˙e māinstɛ̄ĺĺiš / to jɛśt˙ / tiedam‿mi̮n jɛ t́e pōrmuš лāmpaz vuɛnǯ́ // potomu što jārka / ʲεĺ‿ĺam̆ma / maxt åńń ĺi / tomB ĺi tu˓aĺet // jarka sāḿ ĺai / što tu˓aĺet pīrr pi̮ɛRt // vot i лampaz i pōrɛt˙ // a ras pōra͕t˙ / načit sāmлi̮ jɛ pōrmi̮š vuɛnǯ́ // i vot načit vīrci͔ kōn˙D˙a͕t˙ / vot dopust́im / što rōvvi͔ kŭŏrrɛ // kōn˙D˙a͕t vīDt kūDt vierc / ōллi̮vi̮ʲm // maɳɳa sii̭ji vi̮d́eлi̮vajut // taB načit pōṷsi͔t˙ / sū snačaлa jāvvi͔vi̮jm / maɳɳa ĺiepi͔n˙ pōṷsɛt˙ // maɳɳa nuBB / ńieśka͕t˙ // sonn šon̄D ḿāGGi͔j // i maɳɳa koarɛt˙ //	koarɛt / šon̄D rovv	// pońimajɛš / ĺuboj morōs vuaDɛt˙ ī	 / jɛ t́e // vot ti̮t od́jaлo to jarka ĺai̭jiš / rovvɛ //<br>
-- a mɛn tui̭jiš лampaz oллi̮n˙?<br>
-- a vot лampāz oллi̮n˙ // mi̮n śečas i mainsti͔m / što лampāz ōллi̮n˙ tui̭jiš / vot 	sōki͔D / vāci̮D // potom koDDi͔š / buzaŕinka nazi̮vaлśa // vot čas po‿russki‿t‿govoŕat svitor / a toDa buzaŕink‿š // on tōлsti̮ / on ḿesto fufajki bi̮л // potom šarfi̮ bi̮ĺi / šarf tožɛ ōллi̮n koDDi͔š //<br>
-- maxt tuɛĺjeśt ńāɳ tui̭ja͕t˙?<br>
-- a vot pohci͔ tuoĺjɛst / ńāɳ tui̭jīš́ / tožɛ // tāлva vot ɛnniš ka͕mmi / a t́assa i̮nniš / tožɛ botinki jɛĺ‿ĺam̆ma / nŭɛ̆r̄́ḱḱ / tožɛ pohci͔ tuĺjɛśt˙ tui̭jāma / kuormus // si̮st šɛr̄śt˙ ɛĺ‿ĺa / si̮ksi̮n ɛĺ‿ĺa / si̮n čisti̮j ńāɳɳ // tak vot ńaɳɳ tui̭jɛt t́odda / pohci̮ tuɛĺ siṕṕji tok jāɯ̭̄ra // tuɛĺ kuoxt kōɯ̭m // ḿeśac nav́erno ārr // puk si̮xsi͔n puk rōD˙a͕t˙ ḿēnDa / i pūjcc sī̮z ṕē˓et // maɳɳa tam / mieci͔śt˙ pūɯ̭ti͔t pārk // pĭĕśś loɳti͔m / pĭĕśś pārk / coɯ̭ɳɛt˙ t́iGGin˙ pĭĕśś //<br>
-- a kūss pārk?<br>
-- kūss pārk ij mɛ̄n // toko pĭĕśś // maɳɳa sij cōɯ̭ngɛt˙ // si̮n pārk tūltɛt / tok kūni͔ ṕē˓et // i maɳɳa ti̮n čaʒ́ vāлat‿tok / pārki͔vi̮ʲm tok pui̭cc si̮z // i sonn toB ārr / kon tom sonn ij šɛnD čuvstvujɛš / što sonn šɛn̄t tv́ordoj / i sonn boĺšɛ ij āĺj vɛ̄nɛ //maɳɳa sij sū på̄jDɛt˙ / koškɛ̄t˙ / oṕat ī kuarɛt˙ // mi̮nna kŭărrɛ // xot́ ka͕ḿḿe // tožɛ sāhpji kå̄rri͔‿ɛ̄лл / ko kuod́ji kūrri͔š // ōhṕṕiḱ nazi̮vajɛcca // ōʰṕḱi kurri͔š // nū pāj Bɛлл pūлvi͔ mokom // pazāssi̮ tui̭jīš // vot puohci͔n˙ vui̭jiš / tok pazāssi̮ tui̭jɛ̄š / potomu što / puk šon̄D nāɳɳaśt˙ / pohci̮‿ńāɳɳast // śo puk jīč tui̭jīš //<br>
-- a maxt nuɛD˙ koddi͔š?<br>
-- a nuɛh́t˙ // sūni͔ vānǯ́iš sūni͔ // no koDDiš / maxt vot čas sā͕j̄mi tožɛ v́ed́ kōDak // jīč koddiš nuɛhD˙ // końešno / kūʰkki kå̄rri͔ // no nuoh́tti͔ kōDi͔ / dak si̮st / si̮nn i̮xt xvāt˙ sam ijiś‿ɛ̄h́ḱ / tɛt nuɛh́t˙ // ʲīč koDDiš // maɳɳa sū nuoh́t̆ ta͕t˙ / toB tui̭jɛt˙ / vŭɛ̆ĺĺ‿B́eĺĺa / pāj‿B́eĺĺa // a nŭŏŕ tɛĺĺ / jɛĺ‿ĺam̆ma nuɛŕ // a nuɛŕ tui̭jɛš / tī͔uGɛ / vot māndi͔śt˙ maxt ti̮t ĺie / vot tɛst tui̭jɛ̄š nuori / tui̭jɛt˙ / kažnoj śaḿjiśt˙ ĺai jījiś nŭɛ̆h́D˙ // a t́assa nuɛh́tta jik ńimaxt // t́oDDa sā͕jmivi̮jm šɛ̄ĺat˙ čox̄ča / a t́assa vot å̄ńń / ij ńimī puɯ̭t // toko nŭɛ̆t˙t˙ɛn˙ viR̄t‿kuɛĺ šɛ̄ĺat / nŭɛ̆ttɛn˙ da // vuoskni͔ da tomB/ ij ucc jāɯ̭ŕin˙ pīrr rōGa͕t˙ / toko nŭɛ̆h́ttɛn˙ //  <br>
-- a mɛn tui̭jiš štobi̮ čah́ṕeś nuɛh́D˙ šī̮ndi͔?<br>
-- sū cɛ̄h˙cɛt˙ // vot rūšas ćeĺka͕t˙ krāsit˙ // cihcciš // a mat́eŕjaл puk ĺie / pĭă͕śś‿pārk // kūni͔ ṕējɛt tok // kūni͔ pōĺDa͕t˙ pĭĕśśeń˙ / čuaʒi͔ pōĺD˙a͕t˙ kūni͔ // i tožɛ oṕat́ tūĺt̆tɛt˙ / maɳɳa tok nuoh́D˙ лuošta͕t˙ / tožɛ tūлtɛt˙ / mi̮nmot‿tok v́ŕeḿa / i sonn šon̄D čah́ṕṕeś //<br>
-- a mi̮n via͕л pii̭jɛš? suɛĺ pii̭jiš?<br>
-- sui̭ĺi pli̭jiš // suɛĺi / i potom suɛĺĺ / pārk i kūni͔ // i boĺšɛ ɛj ńimi̮n // i t́eśś‿Baj vuoj ši̮ĺĺe / nŭɛ̆h́ttɛ // vi̮t́erṕit krāska //<br>
-- a maxt vi̮nsɛ tui̭jɛš jarka sāḿ?<br>
-- a vi̮nsi͔ // vot monn tak jim‿mōšt // monn toko vi̮j̄n̆ni͔m лūɯ̭D ĺai // kŭɛ̆h́t˙ ĺai / kuadi͔śt˙ ĺai pij̄miš лūɯ̭t // vɛ̄nas‿kuśk˙ // i toB ɛĺ‿ĺa ńi i̮ht rūɯ̭t nūĺ // jarka vi̮nnas tui̭jīč // ɛĺ‿ĺa ńi i̮ɯ̭t ruɯ̭̄t‿nuoĺ // a kūrri̮š pŕamo ti̮z sāɯ̭ĺ ĺie / iĺi vūn˙Di͔Gi̮jm kūrri͔š / iĺi mokom ĺei̭jiš sɛŕv́ nŭŏrrin˙ kŭŏrri͔š // a maɳɳa / kŭăśś āĺkiš rūɯ̭t‿nuoĺ / dak tɛĺĺ ĺegče āĺkiš // rūɯ̭D nŭŏĺĺin˙ tui̭jɛ̄ // a jarka nu͔t˙t˙ tui̭jiš / nu͔tt sij t́eŕŕiś tui̭jɛš // i ńi‿ixt rūɯ̭t nōɯ̭ĺ / puk d́eŕeva // puk manDi͔st vaлtmi̮š // vi̮nsi͔ tui̭jis // mokom vi̮nnas monn jim vuajm / toko vi̮i̭jim kūsk / kuadɛśt˙ ĺai pīi̭miš // no vi̮nnas kažni̮j ij tui̭jāmiš / t́i māti͔ toko // kažni̮j tožɛ vi̮nnas / ɛj māt˙ tui̭jɛ //<br>
-- a maxt kuɛD́ tui̭jiš jarka sāḿ?<br>
-a kuaD́ // ·nu kuaD́ / maxt rūšas ćeĹka͕t˙ åńń· / šaлaš tui̭jɛt˙ // tuijɛt˙ snačaлa srūB // bŕevn ńeĺĺ čūpa͕t˙ srub // a potom srāzu ɛллᵃ / tok krī̮ša poa ɛ̄лs // krī̮ša ṕē˓et // maɳɳa pi˓ä lūnt̆˙t˙ɛt˙ / piećć‿pieĺi ṕē˓et˙ / ṕē˓et˙ / maɳɳa t́ōškat kɛrr / kūzzi͔st t́ōškɛt˙ / kɛrr / tuɛĺ sai̭ja // tuoĺ ṕē˓et kusk / kɛ̄r kāt́jat˙ // maɳɳa ɛлл vɛлл· mānD ṕe˓et / štobi͔ pāksaB ĺečin // vot i kuɛht Gotov‿nu͔t˙t˙ // kuad́jɛst i jāĺat˙ //</p>`
-                    }
-                }
+                texts: [
+                    { id: "akkala1", title: "Как пекли хлеб?", file: "texts/akkala/kert-1.txt" },
+                    { id: "akkala2", title: "Как солили рыбу?", file: "texts/akkala/kert-2.txt" }
+                ]
             },
             kildin: {
                 name: "Кильдин-саамский",
-                texts: {
-                    text1: {
-                        title: "Текст 1",
-                        content: "<p>Здесь будут тексты на кильдин-саамском языке.</p><p>Этот раздел находится в разработке.</p>"
-                    },
-                    text2: {
-                        title: "Текст 2",
-                        content: "<p>Пример текста на кильдин-саамском языке.</p>"
-                    },
-                    text3: {
-                        title: "Текст 3",
-                        content: "<p>Ещё один текст на кильдин-саамском языке.</p>"
-                    }
-                }
+                texts: [
+                    { id: "kildin", title: "Текст 1", file: "texts/kildin/example.txt" }
+                ]
             },
             ter: {
                 name: "Тер-саамский",
-                texts: {
-                    text1: {
-                        title: "Текст 1",
-                        content: "<p>Здесь будут тексты на тер-саамском языке.</p><p>Этот раздел находится в разработке.</p>"
-                    }
-                }
+                texts: [
+                    { id: "ter", title: "Текст 1", file: "texts/ter/example.txt" }
+                ]
+            }
         };
 
-        let currentLanguage = 'ter'; // По умолчанию показываем тер-саамский
+        let currentLanguage = 'ter';
 
-        function selectLanguage(lang, btn) {
-            currentLanguage = lang;
-    
-            // Обновляем активную кнопку
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-    
-            // Обновляем заголовок
-            document.getElementById('languageTitle').textContent = `Тексты на ${languageData[lang].name}`;
-    
-            // Обновляем выпадающий список
+        // Загружаем список текстов для языка
+        function loadLanguageTexts(lang) {
             const selector = document.getElementById('textSelector');
-            selector.innerHTML = '<option value="">-- Выберите текст --</option>';
-    
-            const texts = languageData[lang].texts;
-            for (const [key, text] of Object.entries(texts)) {
-                const option = document.createElement('option');
-                option.value = key;
-                 option.textContent = text.title;
-                selector.appendChild(option);
-            }
-    
-            // Очищаем отображение текста
-            document.getElementById('textDisplay').innerHTML = '<div class="empty-state">👆 Выберите текст из списка</div>';
-            document.getElementById('stats').innerHTML = '';
-        }
-
-        function showSelectedText() {
-            const selector = document.getElementById('textSelector');
-            const display = document.getElementById('textDisplay');
-            const stats = document.getElementById('stats');
-            const selectedValue = selector.value;
-
-            if (!selectedValue) {
-                display.innerHTML = '<div class="empty-state">👆 Пожалуйста, выберите текст</div>';
-                stats.innerHTML = '';
-                return;
-            }
-
-            const textData = languageData[currentLanguage].texts[selectedValue];
+            selector.innerHTML = '<option value="">-- Загрузка... --</option>';
             
-            if (textData) {
-                display.innerHTML = textData.content;
+            // Имитация загрузки (в реальности данные уже в languageData)
+            setTimeout(() => {
+                selector.innerHTML = '<option value="">-- Выберите текст --</option>';
                 
-                // Подсчитываем статистику
-                const plainText = textData.content.replace(/<[^>]*>/g, ' ');
-                const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length;
-                const charCount = plainText.replace(/\s+/g, '').length;
-                const linesCount = textData.content.split('<br>').length;
+                const texts = languageData[lang].texts;
+                texts.forEach(text => {
+                    const option = document.createElement('option');
+                    option.value = text.id;
+                    option.dataset.file = text.file;
+                    option.textContent = text.title;
+                    selector.appendChild(option);
+                });
+            }, 100);
+        }
+
+        // Загружаем содержимое текстового файла
+        async function loadTextContent(filePath) {
+            const display = document.getElementById('textDisplay');
+            display.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
+            
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) throw new Error('Файл не найден');
+                const text = await response.text();
                 
-                stats.innerHTML = `
-                    <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
-                    <span>📝 Строк: ${linesCount}</span>
-                    <span>📏 Символов: ${charCount}</span>
-                `;
+                // Форматируем текст с сохранением переносов строк
+                const formattedText = text
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .map(line => `<p>${line}</p>`)
+                    .join('');
+                
+                return formattedText || '<p>[Пустой файл]</p>';
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                return `<div class="error">❌ Ошибка загрузки файла: ${filePath}<br>Убедитесь, что файл существует в репозитории.</div>`;
             }
         }
 
-        // Инициализация при загрузке страницы
+        // Показываем выбранный текст
+        async function showSelectedText(textId) {
+            const selector = document.getElementById('textSelector');
+            const selectedOption = selector.querySelector(`option[value="${textId}"]`);
+            
+            if (!selectedOption) return;
+            
+            const filePath = selectedOption.dataset.file;
+            const content = await loadTextContent(filePath);
+            
+            document.getElementById('textDisplay').innerHTML = content;
+            
+            // Обновляем статистику
+            const stats = document.getElementById('stats');
+            const plainText = content.replace(/<[^>]*>/g, ' ');
+            const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length;
+            const charCount = plainText.replace(/\s+/g, '').length;
+            const linesCount = content.split('<p>').length - 1;
+            
+            stats.innerHTML = `
+                <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
+                <span>📝 Строк: ${linesCount}</span>
+                <span>📏 Символов: ${charCount}</span>
+            `;
+        }
+
+        // Обработчики событий
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Убираем активный класс у всех кнопок
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                // Добавляем активный класс нажатой кнопке
+                this.classList.add('active');
+                
+                // Получаем выбранный язык
+                currentLanguage = this.dataset.lang;
+                
+                // Обновляем заголовок
+                document.getElementById('languageTitle').textContent = `Тексты на ${languageData[currentLanguage].name}`;
+                
+                // Загружаем список текстов для языка
+                loadLanguageTexts(currentLanguage);
+                
+                // Очищаем отображение
+                document.getElementById('textDisplay').innerHTML = '<div class="empty-state">👆 Выберите текст из списка</div>';
+                document.getElementById('stats').innerHTML = '';
+            });
+        });
+
+        // Обработчик выбора текста
+        document.getElementById('textSelector').addEventListener('change', function(e) {
+            const textId = e.target.value;
+            if (textId) {
+                showSelectedText(textId);
+            } else {
+                document.getElementById('textDisplay').innerHTML = '<div class="empty-state">👆 Выберите текст из списка</div>';
+                document.getElementById('stats').innerHTML = '';
+            }
+        });
+
+        // Инициализация
         window.onload = function() {
-            // Устанавливаем тер-саамский как активный по умолчанию
-            selectLanguage('ter');
+            loadLanguageTexts('ter');
         };
     </script>
 </body>
