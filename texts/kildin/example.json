@@ -50,10 +50,28 @@
       "lemma": "тӯйй"
     },
     {
+      "surface": "Мунн",
+      "pos": null,
+      "form": null,
+      "lemma": null
+    },
+    {
+      "surface": "эмм",
+      "pos": null,
+      "form": null,
+      "lemma": null
+    },
+    {
       "surface": "са̄рн",
       "pos": "глагол",
       "form": "коннегатив",
       "lemma": "са̄ррнэ"
+    },
+    {
+      "surface": "рӯшас",
+      "pos": null,
+      "form": null,
+      "lemma": null
     }
   ]
 }
