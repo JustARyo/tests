@@ -186,6 +186,10 @@
             color: white;
         }
 
+        .info-button.hidden {
+            display: none;
+        }
+
         .text-content {
             font-size: 16px;
             font-family: 'DejaVu Sans', 'Noto Sans', sans-serif;
@@ -471,18 +475,7 @@
                 <button class="modal-close" id="closeModalBtn">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
-                <div class="source-info">
-                    <strong>Источник:</strong><br>
-                    <a href="https://saami.su/biblioteka-saamskij-yazyk/obraztsy-saamskoj-rechi.html" 
-                       target="_blank" 
-                       class="source-link">
-                        Керт Г. М., Зайков П. М. Образцы саамской речи / науч. ред. В. З. Панфилов; сост. Г. М. Керт, П. М. Зайков. — Петрозаводск: Карельский филиал АН СССР, Институт языка, литературы и истории, 1988. — С. 12. — 192 с.
-                    </a>
-                </div>
-                <p>
-                    <strong>Сведения об информанте:</strong><br>
-                    <em>(не указано)</em>
-                </p>
+                <!-- Данные будут подставляться динамически -->
             </div>
         </div>
     </div>
@@ -492,40 +485,77 @@
             skolt: {
                 name: "колтта-саамский",
                 texts: [
-                    { id: "skolt", title: "Текст 1", file: "texts/skolt/example.json" }
+                    { 
+                        id: "skolt", 
+                        title: "Текст 1", 
+                        file: "texts/skolt/example.json",
+                        info: null
+                    }
                 ]
             },
             akkala: {
                 name: "аккала-саамский",
                 texts: [
-                    { id: "akkala1", title: "Как пекли хлеб?", file: "texts/akkala/kert-1.json" },
-                    { id: "akkala2", title: "Как солили рыбу?", file: "texts/akkala/kert-2.json" }
+                    { 
+                        id: "akkala1", 
+                        title: "Как пекли хлеб?", 
+                        file: "texts/akkala/kert-1.json",
+                        info: {
+                            source: "Керт Г. М., Зайков П. М. Образцы саамской речи / науч. ред. В. З. Панфилов; сост. Г. М. Керт, П. М. Зайков. — Петрозаводск: Карельский филиал АН СССР, Институт языка, литературы и истории, 1988. — С. 12. — 192 с.",
+                            link: "https://saami.su/biblioteka-saamskij-yazyk/obraztsy-saamskoj-rechi.html",
+                            informant: "не указано"
+                        }
+                    },
+                    { 
+                        id: "akkala2", 
+                        title: "Как солили рыбу?", 
+                        file: "texts/akkala/kert-2.json",
+                        info: {
+                            source: "Керт Г. М., Зайков П. М. Образцы саамской речи / науч. ред. В. З. Панфилов; сост. Г. М. Керт, П. М. Зайков. — Петрозаводск: Карельский филиал АН СССР, Институт языка, литературы и истории, 1988. — С. 15. — 192 с.",
+                            link: "https://saami.su/biblioteka-saamskij-yazyk/obraztsy-saamskoj-rechi.html",
+                            informant: "Антонова А.А., 1928 г.р., с. Бабенск"
+                        }
+                    }
                 ]
             },
             kildin: {
                 name: "кильдин-саамский",
                 texts: [
-                    { id: "kildin", title: "Текст 1", file: "texts/kildin/example.json" }
+                    { 
+                        id: "kildin", 
+                        title: "Текст 1", 
+                        file: "texts/kildin/example.json",
+                        info: null
+                    }
                 ]
             },
             ter: {
                 name: "тер-саамский",
                 texts: [
-                    { id: "ter", title: "Текст 1", file: "texts/ter/example.json" }
+                    { 
+                        id: "ter", 
+                        title: "Текст 1", 
+                        file: "texts/ter/example.json",
+                        info: null
+                    }
                 ]
             }
         };
 
-        let currentLanguage = 'kildin';
+        let currentLanguage = 'ter';
         let currentFileId = null;
-        let currentFileName = '';
+        let currentFileData = null;
         let currentWordData = null;
+        let currentTextInfo = null;
 
         const modal = document.getElementById('textInfoModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
+        const textInfoBtn = document.getElementById('textInfoBtn');
 
         function openModal() {
-            modal.classList.add('active');
+            if (currentTextInfo) {
+                modal.classList.add('active');
+            }
         }
 
         function closeModal() {
@@ -569,13 +599,14 @@
                     li.dataset.id = text.id;
                     li.dataset.file = text.file;
                     li.dataset.title = text.title;
-                    li.addEventListener('click', () => selectFile(text.id, text.file, text.title, li));
+                    li.dataset.hasInfo = text.info ? 'true' : 'false';
+                    li.addEventListener('click', () => selectFile(text.id, text.file, text.title, text.info, li));
                     fileList.appendChild(li);
                 });
             }, 100);
         }
 
-        function selectFile(fileId, filePath, fileTitle, element) {
+        function selectFile(fileId, filePath, fileTitle, fileInfo, element) {
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('active');
             });
@@ -586,15 +617,22 @@
             
             currentFileId = fileId;
             currentFileName = fileTitle;
+            currentTextInfo = fileInfo;
             
             document.getElementById('currentTextTitle').textContent = fileTitle;
+            
+            // Показываем/скрываем кнопку информации
+            if (fileInfo) {
+                textInfoBtn.classList.remove('hidden');
+            } else {
+                textInfoBtn.classList.add('hidden');
+            }
             
             loadTextContent(filePath);
         }
 
         // Функция для разделения слова и знаков препинания
         function splitWordAndPunctuation(token) {
-            // Ищем знаки препинания в начале и конце слова
             const match = token.match(/^([.,!?;:()\[\]{}<>""''\-–—\/\\]*)(.*?)([.,!?;:()\[\]{}<>""''\-–—\/\\]*)$/);
             if (match) {
                 return {
@@ -620,33 +658,20 @@
             words.forEach(span => {
                 span.addEventListener('click', (e) => {
                     const rawWord = e.target.textContent;
-                    const cleanWordText = e.target.dataset.clean || rawWord;
-                    showWordInfo(rawWord, cleanWordText);
+                    const wordIndex = parseInt(e.target.dataset.index);
+                    showWordInfo(rawWord, wordIndex);
                 });
             });
         }
 
-        function showWordInfo(rawWord, cleanWordText) {
+        function showWordInfo(rawWord, wordIndex) {
             const infoContent = document.getElementById('wordInfoContent');
             
-            // Ищем слово в данных
+            // Ищем слово в данных по индексу
             let wordInfo = null;
             
-            if (currentWordData) {
-                // Прямой поиск по очищенному слову
-                if (currentWordData[cleanWordText]) {
-                    wordInfo = currentWordData[cleanWordText];
-                } else {
-                    // Поиск по ключам, которые содержат очищенное слово
-                    for (const key in currentWordData) {
-                        // Нормализуем ключ для сравнения
-                        const normalizedKey = key.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\]/g, '');
-                        if (normalizedKey === cleanWordText || cleanWordText.includes(normalizedKey)) {
-                            wordInfo = currentWordData[key];
-                            break;
-                        }
-                    }
-                }
+            if (currentWordData && Array.isArray(currentWordData) && wordIndex !== undefined) {
+                wordInfo = currentWordData[wordIndex];
             }
             
             if (wordInfo) {
@@ -698,8 +723,14 @@
                 
                 const data = await response.json();
                 
-                // Сохраняем данные о словах
-                currentWordData = data.words || {};
+                // Сохраняем данные о словах (ожидаем массив)
+                if (Array.isArray(data.words)) {
+                    currentWordData = data.words;
+                } else {
+                    // Преобразуем объект в массив для обратной совместимости
+                    currentWordData = Object.values(data.words || {});
+                }
+                
                 console.log('Загруженные данные о словах:', currentWordData);
                 
                 const text = data.text || '';
@@ -708,6 +739,8 @@
                 const lines = text.split('\n').filter(line => line.trim().length > 0);
                 
                 let formattedHtml = '';
+                let wordIndex = 0;
+                
                 lines.forEach(line => {
                     // Разбиваем на токены (слова и знаки препинания)
                     const tokens = line.match(/(\s+|[^\s]+)/g) || [];
@@ -735,26 +768,14 @@
                         
                         // Обрабатываем само слово
                         if (parts.word) {
-                            // Проверяем, есть ли данные для этого слова
-                            let hasData = false;
-                            if (currentWordData) {
-                                // Прямое совпадение
-                                if (currentWordData[parts.word]) {
-                                    hasData = true;
-                                } else {
-                                    // Поиск по нормализованным ключам
-                                    for (const key in currentWordData) {
-                                        const normalizedKey = key.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\]/g, '');
-                                        if (normalizedKey === parts.word || parts.word.includes(normalizedKey)) {
-                                            hasData = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
+                            // Проверяем, есть ли данные для этого слова по индексу
+                            const hasData = currentWordData && currentWordData[wordIndex] !== undefined;
                             
                             const className = hasData ? 'word-marked' : 'word-unmarked';
-                            result += `<span class="${className}" data-clean="${parts.word}">${parts.word}</span>`;
+                            result += `<span class="${className}" data-index="${wordIndex}">${parts.word}</span>`;
+                            
+                            // Увеличиваем индекс слова только если это действительно слово (не пунктуация)
+                            wordIndex++;
                         }
                         
                         // Добавляем конечные знаки препинания (некликабельные)
@@ -772,27 +793,23 @@
                 
                 setupWordClickHandlers();
                 
-                updateStats(text);
+                updateStats();
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
                 textContent.innerHTML = `<div class="error">❌ Ошибка загрузки файла: ${filePath}<br>Убедитесь, что файл существует и имеет правильный формат JSON.</div>`;
             }
         }
 
-        function updateStats(text) {
+        function updateStats() {
             const stats = document.getElementById('stats');
             
             // Подсчитываем размеченные и неразмеченные слова
             const markedCount = document.querySelectorAll('.text-content span.word-marked').length;
             const unmarkedCount = document.querySelectorAll('.text-content span.word-unmarked').length;
-            const nonClickableCount = document.querySelectorAll('.text-content span.non-clickable').length;
             
             stats.innerHTML = `
-                <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
-                <span>📝 Всего токенов: ${markedCount + unmarkedCount + nonClickableCount}</span>
-                <span style="color: #2e7d32;">✅ Размечено слов: ${markedCount}</span>
-                <span style="color: #c62828;">❌ Не размечено слов: ${unmarkedCount}</span>
-                <span>⚫ Знаков препинания: ${nonClickableCount}</span>
+                <span>📊 Слов в тексте: <strong>${markedCount + unmarkedCount}</strong></span>
+                <span style="color: #c62828;">❌ Неразмеченных слов: ${unmarkedCount}</span>
             `;
         }
 
@@ -804,6 +821,10 @@
                 currentLanguage = this.dataset.lang;
                 currentFileId = null;
                 currentWordData = null;
+                currentTextInfo = null;
+                
+                // Скрываем кнопку информации
+                textInfoBtn.classList.add('hidden');
                 
                 updateBrowserHeader();
                 loadFileList(currentLanguage);
@@ -815,19 +836,32 @@
             });
         });
 
-        document.getElementById('textInfoBtn').addEventListener('click', openModal);
+        textInfoBtn.addEventListener('click', function() {
+            if (currentTextInfo) {
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    <div class="source-info">
+                        <strong>Источник:</strong><br>
+                        <a href="${currentTextInfo.link}" 
+                           target="_blank" 
+                           class="source-link">
+                            ${currentTextInfo.source}
+                        </a>
+                    </div>
+                    <p>
+                        <strong>Сведения об информанте:</strong><br>
+                        <em>${currentTextInfo.informant || 'не указано'}</em>
+                    </p>
+                `;
+                openModal();
+            }
+        });
 
         window.onload = function() {
             updateBrowserHeader();
-            // Для тестирования сразу загружаем кильдинский текст
-            currentLanguage = 'kildin';
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.lang === 'kildin') {
-                    btn.classList.add('active');
-                }
-            });
-            loadFileList('kildin');
+            // Скрываем кнопку информации при загрузке
+            textInfoBtn.classList.add('hidden');
+            loadFileList('ter');
             document.getElementById('currentTextTitle').textContent = '';
         };
     </script>
