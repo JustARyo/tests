@@ -189,13 +189,12 @@
 <body>
     <div class="container">
         <h1>📚 Саамские тексты</h1>
-        <div class="subtitle">Колтта-саамский | Аккала-саамский | Кильдин-саамский | Тер-саамский</div>
         
         <div class="language-section">
-            <button class="lang-btn active" onclick="selectLanguage('skolt')">Колтта-саамский</button>
-            <button class="lang-btn" onclick="selectLanguage('akkala')">Аккала-саамский</button>
-            <button class="lang-btn" onclick="selectLanguage('kildin')">Кильдин-саамский</button>
-            <button class="lang-btn" onclick="selectLanguage('ter')">Тер-саамский</button>
+            <button class="lang-btn active" data-lang="koltta" onclick="selectLanguage('skolt', this)">Колтта-саамский</button>
+            <button class="lang-btn" data-lang="akkala" onclick="selectLanguage('akkala', this)">Аккала-саамский</button>
+            <button class="lang-btn" data-lang="kildin" onclick="selectLanguage('kildin', this)">Кильдин-саамский</button>
+            <button class="lang-btn" data-lang="ter" onclick="selectLanguage('ter', this)">Тер-саамский</button>
         </div>
 
         <div class="texts-section">
@@ -319,28 +318,28 @@ a kuaD́ // ·nu kuaD́ / maxt rūšas ćeĹka͕t˙ åńń· / šaлaš tui̭j�
 
         let currentLanguage = 'ter'; // По умолчанию показываем тер-саамский
 
-        function selectLanguage(lang) {
+        function selectLanguage(lang, btn) {
             currentLanguage = lang;
-            
+    
             // Обновляем активную кнопку
-            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+    
             // Обновляем заголовок
             document.getElementById('languageTitle').textContent = `Тексты на ${languageData[lang].name}`;
-            
+    
             // Обновляем выпадающий список
             const selector = document.getElementById('textSelector');
             selector.innerHTML = '<option value="">-- Выберите текст --</option>';
-            
+    
             const texts = languageData[lang].texts;
             for (const [key, text] of Object.entries(texts)) {
                 const option = document.createElement('option');
                 option.value = key;
-                option.textContent = text.title;
+                 option.textContent = text.title;
                 selector.appendChild(option);
             }
-            
+    
             // Очищаем отображение текста
             document.getElementById('textDisplay').innerHTML = '<div class="empty-state">👆 Выберите текст из списка</div>';
             document.getElementById('stats').innerHTML = '';
