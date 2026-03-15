@@ -231,16 +231,16 @@
         }
 
         .text-content span.word-started {
-            color: #ed6c02; /* Темно-желтый/оранжевый */
+            color: #b8860b; /* Темно-желтый/оранжевый */
             cursor: pointer;
             transition: background-color 0.2s;
             font-weight: 500;
         }
 
         .text-content span.word-started:hover {
-            background-color: #fff4e5;
+            background-color: #fff8e0;
             border-radius: 4px;
-            outline: 1px solid #ed6c02;
+            outline: 1px solid #b8860b;
         }
 
         .text-content span.non-clickable {
@@ -288,7 +288,10 @@
             padding: 12px;
             border-radius: 6px;
             border-left: 4px solid #2a5298;
+            transition: border-left-color 0.2s;
         }
+        .attribute-item.missing {
+            border-left-color: #c62828;
 
         .attribute-label {
             font-size: 12px;
@@ -306,6 +309,10 @@
             font-family: 'DejaVu Sans', 'Noto Sans', sans-serif;
         }
 
+         .attribute-value.missing {
+            color: #c62828; /* Красный текст для "не указано" */
+        }
+            
         .empty-state-small {
             color: #999;
             text-align: center;
@@ -392,6 +399,15 @@
 
         .modal-close:hover {
             background: #f0f0f0;
+        }
+
+        .lang-btn, .file-item, .info-button, .modal-close {
+            transform: none !important;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s !important;
+        }
+
+        .lang-btn:hover, .file-item:hover, .info-button:hover, .modal-close:hover {
+            transform: none !important;
         }
 
         .modal-body {
@@ -678,36 +694,41 @@
         }
 
         function showWordInfo(rawWord, wordIndex) {
-            const infoContent = document.getElementById('wordInfoContent');
-            
-            // Берем данные из массива по индексу
-            const wordData = currentWordData[wordIndex];
-            
-            if (wordData) {
-                infoContent.innerHTML = `
-                    <div class="word-display">${rawWord}</div>
-                    <div class="word-attributes">
-                        <div class="attribute-item">
-                            <div class="attribute-label">Часть речи</div>
-                            <div class="attribute-value">${wordData.pos || '<em>не указано</em>'}</div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Грамматическая форма</div>
-                            <div class="attribute-value">${wordData.form || '<em>не указано</em>'}</div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Начальная форма</div>
-                            <div class="attribute-value">${wordData.lemma || '<em>не указано</em>'}</div>
-                        </div>
-                        <div class="attribute-item">
-                            <div class="attribute-label">Перевод</div>
-                            <div class="attribute-value">${wordData.translation || wordData.trans || '<em>не указано</em>'}</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
+    const infoContent = document.getElementById('wordInfoContent');
+    
+    // Берем данные из массива по индексу
+    const wordData = currentWordData[wordIndex];
+    
+    if (wordData) {
+        // Проверяем каждое поле на наличие данных
+        const posMissing = !wordData.pos;
+        const formMissing = !wordData.form;
+        const lemmaMissing = !wordData.lemma;
+        const transMissing = !(wordData.translation || wordData.trans);
+        
+        infoContent.innerHTML = `
+            <div class="word-display">${rawWord}</div>
+            <div class="word-attributes">
+                <div class="attribute-item ${posMissing ? 'missing' : ''}">
+                    <div class="attribute-label">Часть речи</div>
+                    <div class="attribute-value ${posMissing ? 'missing' : ''}">${wordData.pos || '<em>не указано</em>'}</div>
+                </div>
+                <div class="attribute-item ${formMissing ? 'missing' : ''}">
+                    <div class="attribute-label">Грамматическая форма</div>
+                    <div class="attribute-value ${formMissing ? 'missing' : ''}">${wordData.form || '<em>не указано</em>'}</div>
+                </div>
+                <div class="attribute-item ${lemmaMissing ? 'missing' : ''}">
+                    <div class="attribute-label">Начальная форма</div>
+                    <div class="attribute-value ${lemmaMissing ? 'missing' : ''}">${wordData.lemma || '<em>не указано</em>'}</div>
+                </div>
+                <div class="attribute-item ${transMissing ? 'missing' : ''}">
+                    <div class="attribute-label">Перевод</div>
+                    <div class="attribute-value ${transMissing ? 'missing' : ''}">${wordData.translation || wordData.trans || '<em>не указано</em>'}</div>
+                </div>
+            </div>
+        `;
+    }
+}
         async function loadTextContent(filePath) {
             const textContent = document.getElementById('textContent');
             textContent.innerHTML = '<div class="loading">⏳ Загрузка текста...</div>';
