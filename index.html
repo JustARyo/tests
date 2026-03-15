@@ -516,7 +516,7 @@
             }
         };
 
-        let currentLanguage = 'kildin'; // Изменил на кильдинский для тестирования
+        let currentLanguage = 'kildin';
         let currentFileId = null;
         let currentFileName = '';
         let currentWordData = null;
@@ -592,14 +592,27 @@
             loadTextContent(filePath);
         }
 
-        // Функция для очистки слова от знаков препинания
-        function cleanWord(word) {
-            return word.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+$|^[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+/g, '');
+        // Функция для разделения слова и знаков препинания
+        function splitWordAndPunctuation(token) {
+            // Ищем знаки препинания в начале и конце слова
+            const match = token.match(/^([.,!?;:()\[\]{}<>""''\-–—\/\\]*)(.*?)([.,!?;:()\[\]{}<>""''\-–—\/\\]*)$/);
+            if (match) {
+                return {
+                    leading: match[1] || '',
+                    word: match[2] || '',
+                    trailing: match[3] || ''
+                };
+            }
+            return {
+                leading: '',
+                word: token,
+                trailing: ''
+            };
         }
 
-        // Проверка, является ли токен знаком препинания или служебным символом
-        function isPunctuation(token) {
-            return /^[.,!?;:()\[\]{}<>""''\-–—\/\\\s]+$/.test(token);
+        // Проверка, является ли токен только знаками препинания
+        function isOnlyPunctuation(token) {
+            return /^[.,!?;:()\[\]{}<>""''\-–—\/\\]+$/.test(token);
         }
 
         function setupWordClickHandlers() {
@@ -607,7 +620,7 @@
             words.forEach(span => {
                 span.addEventListener('click', (e) => {
                     const rawWord = e.target.textContent;
-                    const cleanWordText = cleanWord(rawWord);
+                    const cleanWordText = e.target.dataset.clean || rawWord;
                     showWordInfo(rawWord, cleanWordText);
                 });
             });
@@ -616,21 +629,20 @@
         function showWordInfo(rawWord, cleanWordText) {
             const infoContent = document.getElementById('wordInfoContent');
             
-            // Ищем слово в данных (сравниваем очищенное слово)
+            // Ищем слово в данных
             let wordInfo = null;
-            let foundKey = null;
             
             if (currentWordData) {
-                // Сначала пытаемся найти точное совпадение
+                // Прямой поиск по очищенному слову
                 if (currentWordData[cleanWordText]) {
                     wordInfo = currentWordData[cleanWordText];
-                    foundKey = cleanWordText;
                 } else {
-                    // Если не нашли, ищем среди ключей, которые содержат наше слово
+                    // Поиск по ключам, которые содержат очищенное слово
                     for (const key in currentWordData) {
-                        if (key.includes(cleanWordText) || cleanWordText.includes(key)) {
+                        // Нормализуем ключ для сравнения
+                        const normalizedKey = key.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\]/g, '');
+                        if (normalizedKey === cleanWordText || cleanWordText.includes(normalizedKey)) {
                             wordInfo = currentWordData[key];
-                            foundKey = key;
                             break;
                         }
                     }
@@ -688,7 +700,7 @@
                 
                 // Сохраняем данные о словах
                 currentWordData = data.words || {};
-                console.log('Загруженные данные о словах:', currentWordData); // Для отладки
+                console.log('Загруженные данные о словах:', currentWordData);
                 
                 const text = data.text || '';
                 
@@ -706,34 +718,51 @@
                             return token;
                         }
                         
-                        // Если это знак препинания или служебный символ
-                        if (isPunctuation(token)) {
+                        // Если это только знаки препинания
+                        if (isOnlyPunctuation(token)) {
                             return `<span class="non-clickable">${token}</span>`;
                         }
                         
-                        // Это слово - очищаем от знаков препинания для проверки
-                        const cleanToken = cleanWord(token);
+                        // Разделяем слово и знаки препинания
+                        const parts = splitWordAndPunctuation(token);
                         
-                        // Проверяем, есть ли данные для этого слова
-                        let hasData = false;
-                        if (currentWordData) {
-                            // Проверяем точное совпадение
-                            if (currentWordData[cleanToken]) {
-                                hasData = true;
-                            } else {
-                                // Проверяем частичное совпадение
-                                for (const key in currentWordData) {
-                                    if (key.includes(cleanToken) || cleanToken.includes(key)) {
-                                        hasData = true;
-                                        break;
+                        let result = '';
+                        
+                        // Добавляем начальные знаки препинания (некликабельные)
+                        if (parts.leading) {
+                            result += `<span class="non-clickable">${parts.leading}</span>`;
+                        }
+                        
+                        // Обрабатываем само слово
+                        if (parts.word) {
+                            // Проверяем, есть ли данные для этого слова
+                            let hasData = false;
+                            if (currentWordData) {
+                                // Прямое совпадение
+                                if (currentWordData[parts.word]) {
+                                    hasData = true;
+                                } else {
+                                    // Поиск по нормализованным ключам
+                                    for (const key in currentWordData) {
+                                        const normalizedKey = key.replace(/[.,!?;:()\[\]{}<>""''\-–—\/\\]/g, '');
+                                        if (normalizedKey === parts.word || parts.word.includes(normalizedKey)) {
+                                            hasData = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
+                            
+                            const className = hasData ? 'word-marked' : 'word-unmarked';
+                            result += `<span class="${className}" data-clean="${parts.word}">${parts.word}</span>`;
                         }
                         
-                        // Возвращаем span с соответствующим классом
-                        const className = hasData ? 'word-marked' : 'word-unmarked';
-                        return `<span class="${className}" data-clean="${cleanToken}">${token}</span>`;
+                        // Добавляем конечные знаки препинания (некликабельные)
+                        if (parts.trailing) {
+                            result += `<span class="non-clickable">${parts.trailing}</span>`;
+                        }
+                        
+                        return result;
                     }).join('');
                     
                     formattedHtml += `<p>${lineHtml}</p>`;
@@ -752,21 +781,18 @@
 
         function updateStats(text) {
             const stats = document.getElementById('stats');
-            const words = text.split(/\s+/).filter(word => word.length > 0 && !/^[\-\/\\]+$/.test(word));
-            const chars = text.replace(/\s+/g, '').length;
-            const lines = text.split('\n').filter(line => line.trim().length > 0).length;
             
             // Подсчитываем размеченные и неразмеченные слова
             const markedCount = document.querySelectorAll('.text-content span.word-marked').length;
             const unmarkedCount = document.querySelectorAll('.text-content span.word-unmarked').length;
+            const nonClickableCount = document.querySelectorAll('.text-content span.non-clickable').length;
             
             stats.innerHTML = `
                 <span>📊 Язык: <strong>${languageData[currentLanguage].name}</strong></span>
-                <span>📝 Строк: ${lines}</span>
-                <span>📏 Символов: ${chars}</span>
-                <span>🔤 Всего слов: ${words.length}</span>
-                <span style="color: #2e7d32;">✅ Размечено: ${markedCount}</span>
-                <span style="color: #c62828;">❌ Не размечено: ${unmarkedCount}</span>
+                <span>📝 Всего токенов: ${markedCount + unmarkedCount + nonClickableCount}</span>
+                <span style="color: #2e7d32;">✅ Размечено слов: ${markedCount}</span>
+                <span style="color: #c62828;">❌ Не размечено слов: ${unmarkedCount}</span>
+                <span>⚫ Знаков препинания: ${nonClickableCount}</span>
             `;
         }
 
