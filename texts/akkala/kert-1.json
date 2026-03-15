@@ -101,13 +101,15 @@
       "surface": "čuatak",
       "pos": null,
       "form": null,
-      "lemma": null
+      "lemma": null,
+      "translation": null
     },
     {
       "surface": "šīG",
       "pos": "прилагательное",
       "form": "аттрибутив",
-      "lemma": "š́īg"
+      "lemma": "š́īg",
+      "translation": "хороший"
     },
     {
       "surface": "tōлл",
@@ -563,7 +565,8 @@
       "surface": "š́iɣ́",
       "pos": "прилагательное",
       "form": "предикатив",
-      "lemma": "š́īg"
+      "lemma": "š́īg",
+      "translation": "хороший"
     },
     {
       "surface": "ĺi",
@@ -587,7 +590,8 @@
       "surface": "š́īg",
       "pos": "прилагательное",
       "form": "аттрибутив",
-      "lemma": "š́īg"
+      "lemma": "š́īg",
+      "translation": "хороший"
     },
     {
       "surface": "žār",
