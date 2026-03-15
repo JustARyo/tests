@@ -3,25 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый сайт</title>
+    <title>Тексты для изучения</title>
+    <!-- Подключаем шрифт Noto Sans через Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            text-align: center;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
         h1 {
             color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            font-family: 'Noto Sans', sans-serif;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            flex: 1;
+            min-width: 250px;
+            cursor: pointer;
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 10px 25px;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .text-display {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            min-height: 200px;
+            border: 2px solid #e0e0e0;
+            line-height: 1.6;
+            font-size: 16px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .text-display p {
+            margin-bottom: 15px;
+        }
+
+        .text-display p:last-child {
+            margin-bottom: 0;
+        }
+
+        .empty-state {
+            color: #999;
+            text-align: center;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+
+        .stats {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            gap: 20px;
+            justify-content: flex-end;
+        }
+
+        .note {
+            background: #e7f5ff;
+            border-left: 4px solid #667eea;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #2c3e50;
         }
     </style>
 </head>
 <body>
-    <h1>Привет, мир!</h1>
-    <p>Это моя первая HTML страница на GitHub</p>
-    <p>📅 Сегодня: <span id="date"></span></p>
-    
+    <div class="container">
+        <h1>📚 Выбор текстов для изучения</h1>
+        
+        <div class="controls">
+            <select id="textSelector">
+                <option value="">-- Выберите текст --</option>
+                <option value="text1">Текст 1: Приветствие</option>
+                <option value="text2">Текст 2: О технологиях</option>
+                <option value="text3">Текст 3: Интересный факт</option>
+                <option value="text4">Текст 4: Мотивация</option>
+                <option value="text5">Текст 5: Природа</option>
+            </select>
+            <button onclick="showSelectedText()">Показать текст</button>
+        </div>
+
+        <div id="textDisplay" class="text-display">
+            <div class="empty-state">
+                👆 Выберите текст из списка выше
+            </div>
+        </div>
+
+        <div id="stats" class="stats"></div>
+
+        <div class="note">
+            <strong>📝 Примечание:</strong> Чтобы добавить свои тексты, отредактируйте массив 
+            <code>texts</code> в JavaScript секции. Каждый текст может содержать HTML теги 
+            (например, для переносов строк используйте &lt;br&gt;).
+        </div>
+    </div>
+
     <script>
-        document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU');
+        // База данных текстов
+        const texts = {
+            text1: {
+                title: "Приветствие",
+                content: "<p>👋 Привет, друг! Рад тебя видеть на этой странице.</p><p>Здесь ты можешь хранить и изучать различные тексты. Это очень удобно для:</p><ul><li>Изучения иностранных языков</li><li>Заучивания стихов</li><li>Подготовки выступлений</li><li>Просто чтения интересных материалов</li></ul>"
+            },
+            text2: {
+                title: "О технологиях",
+                content: "<p>💻 Интересный факт о программировании:</p><p>Первый программист в истории — Ада Лавлейс, которая написала программу для аналитической машины Чарльза Бэббиджа в 1843 году. В ее честь назван язык программирования Ada.</p><p>А вы знали, что первый компьютерный баг был настоящим насекомым? В 1947 году в Гарвардском университете мотылек застрял в реле марк II, и операторы сказали, что они 'отлаживают' (debug) систему.</p>"
+            },
+            text3: {
+                title: "Интересный факт",
+                content: "<p>🧠 Знаете ли вы, что:</p><p>• Человеческий мозг генерирует около 70 000 мыслей в день<br>• За одну минуту через мозг протекает объем крови, достаточный, чтобы наполнить бутылку вина<br>• Мозг на 60% состоит из жира<br>• Информация в нейронах передается со скоростью до 430 км/ч</p>"
+            },
+            text4: {
+                title: "Мотивация",
+                content: "<p>✨ Цитаты для вдохновения:</p><p>«Единственный способ сделать великую работу — любить то, что вы делаете» — Стив Джобс</p><p>«Начни оттуда, где ты сейчас. Используй то, что у тебя есть. Делай то, что ты можешь» — Артур Эш</p><p>«В середине пути всегда кажется, что ты ничего не достиг. Но продолжай идти — и ты увидишь результат»</p>"
+            },
+            text5: {
+                title: "Природа",
+                content: "<p>🌿 Удивительные факты о природе:</p><p>• Бамбук может вырасти на 1 метр за сутки<br>• Дуб начинает давать желуди только через 50 лет после посадки<br>• Самое старое дерево в мире — сосна Мафусаил, ей почти 5000 лет<br>• Муравьи никогда не спят<br>• У улитки около 25 000 зубов</p>"
+            }
+        };
+
+        function showSelectedText() {
+            const select = document.getElementById('textSelector');
+            const display = document.getElementById('textDisplay');
+            const stats = document.getElementById('stats');
+            const selectedValue = select.value;
+
+            if (!selectedValue) {
+                display.innerHTML = '<div class="empty-state">👆 Пожалуйста, выберите текст из списка</div>';
+                stats.innerHTML = '';
+                return;
+            }
+
+            const textData = texts[selectedValue];
+            
+            if (textData) {
+                // Показываем текст
+                display.innerHTML = textData.content;
+                
+                // Подсчитываем статистику (простой подсчет слов без HTML тегов)
+                const plainText = textData.content.replace(/<[^>]*>/g, ' ');
+                const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length;
+                const charCount = plainText.replace(/\s+/g, '').length;
+                
+                stats.innerHTML = `
+                    <span>📊 Название: <strong>${textData.title}</strong></span>
+                    <span>📝 Слов: ${wordCount}</span>
+                    <span>📏 Символов: ${charCount}</span>
+                `;
+            }
+        }
+
+        // Добавляем возможность выбора по Enter в select
+        document.getElementById('textSelector').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                showSelectedText();
+            }
+        });
+
+        // Автоматически показываем текст при выборе (опционально)
+        // document.getElementById('textSelector').addEventListener('change', showSelectedText);
     </script>
 </body>
 </html>
